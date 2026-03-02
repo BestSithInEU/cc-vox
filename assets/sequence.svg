@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 440" fill="none">
+  <defs>
+    <style>
+      .actor { font-family: 'SF Mono','Fira Code',monospace; font-size: 11px; font-weight: 600;
+  text-anchor: middle; }
+      .msg { font-family: 'Inter',system-ui,sans-serif; font-size: 10.5px; fill: #D1D5DB; }
+      .lifeline { stroke: #374151; stroke-width: 1; stroke-dasharray: 4,4; }
+      .sync { stroke: #6B7280; stroke-width: 1.4; marker-end: url(#arw); }
+      .async { stroke: #6B7280; stroke-width: 1.4; stroke-dasharray: 6,3; marker-end: url(#arw); }
+  .self { stroke: #6B7280; stroke-width: 1.4; marker-end: url(#arw); fill: none; }
+    </style>
+    <marker id="arw" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="10" markerHeight="8"
+      orient="auto-start-reverse">
+      <path d="M 1 1 L 10 4 L 1 7" stroke="#6B7280" stroke-width="1.5" fill="none"
+        stroke-linecap="round" stroke-linejoin="round" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="820"
+    height="440" rx="16" fill="#0D1117" />
+
+  <!-- Actor boxes top -->
+  <rect x="30" y="18" width="70" height="30" rx="6"
+    fill="#7C3AED" />
+  <text class="actor" x="65" y="38" fill="#fff">User</text>
+
+  <rect x="150" y="18"
+    width="100" height="30" rx="6" fill="#2563EB" />
+  <text class="actor" x="200" y="38" fill="#fff">Claude
+  Code</text>
+
+  <rect x="300" y="18" width="110" height="30" rx="6" fill="#4B5563" />
+  <text
+    class="actor" x="355" y="38" fill="#D1D5DB">PromptHook</text>
+
+  <rect x="455" y="18" width="100"
+    height="30" rx="6" fill="#4B5563" />
+  <text class="actor" x="505" y="38" fill="#D1D5DB">ToolHook</text>
+
+  <rect
+    x="595" y="18" width="90" height="30" rx="6" fill="#D97706" />
+  <text class="actor" x="640" y="38"
+    fill="#fff">StopHook</text>
+
+  <rect x="725" y="18" width="70" height="30" rx="6" fill="#059669" />
+  <text
+    class="actor" x="760" y="38" fill="#fff">say</text>
+
+  <!-- Lifelines -->
+  <line class="lifeline" x1="65" y1="52"
+    x2="65" y2="420" />
+  <line class="lifeline" x1="200" y1="52" x2="200" y2="420" />
+  <line
+    class="lifeline" x1="355" y1="52" x2="355" y2="420" />
+  <line class="lifeline" x1="505" y1="52"
+    x2="505" y2="420" />
+  <line class="lifeline" x1="640" y1="52" x2="640" y2="420" />
+  <line
+    class="lifeline" x1="760" y1="52" x2="760" y2="420" />
+
+  <!-- Messages -->
+  <!-- 1. User -> Claude: Ask something -->
+  <line class="sync" x1="65" y1="85"
+    x2="196" y2="85" />
+  <text class="msg" x="82" y="80">Ask something</text>
+
+  <!-- 2. PromptHook -> Claude: Inject reminder -->
+  <line class="sync"
+    x1="351" y1="115" x2="204" y2="115" />
+  <text class="msg" x="225" y="110">Inject "end with 📢
+  summary"</text>
+
+  <!-- 3. Claude -> Claude: Works on response -->
+  <path class="self" d="M 200 145 L 225 145 L 225 165 L 204 165" />
+  <text class="msg"
+    x="235" y="158" fill="#9CA3AF" font-style="italic">Works on response...</text>
+
+  <!-- 4. ToolHook -> Claude: Nudge -->
+  <line class="sync"
+    x1="501" y1="190" x2="204" y2="190" />
+  <text class="msg" x="285" y="185">Nudge: "remember 📢"</text>
+
+  <!-- 5. Claude -> Claude: Continues -->
+  <path
+    class="self" d="M 200 215 L 225 215 L 225 235 L 204 235" />
+  <text class="msg" x="235" y="228"
+    fill="#9CA3AF" font-style="italic">Continues working...</text>
+
+  <!-- 6. Claude -> User: Response + summary -->
+  <line class="sync" x1="196"
+    y1="262" x2="69" y2="262" />
+  <text class="msg" x="82" y="257">Response + 📢 summary</text>
+
+  <!-- 7. Claude -> StopHook: Stop event -->
+  <line
+    class="sync" x1="204" y1="292" x2="636" y2="292" />
+  <text class="msg" x="390" y="287">Stop event
+  fired</text>
+
+  <!-- 8. StopHook -> StopHook: Extract -->
+  <path class="self" d="M 640 315 L 670 315 L 670 335 L 644 335" />
+  <text class="msg"
+    x="678" y="328" fill="#FCD34D">Extract 📢</text>
+
+  <!-- 9. StopHook -> say: speak -->
+  <line class="sync" x1="644" y1="355" x2="756"
+    y2="355" />
+  <text class="msg" x="670" y="350">speak(text, voice)</text>
+
+  <!-- 10. say -> say: Auto-detect -->
+  <path class="self"
+    d="M 760 372 L 790 372 L 790 388 L 764 388" />
+  <text class="msg" x="722" y="385" fill="#34D399">TTS
+  → 🔊</text>
+
+  <!-- 11. say --> User: Audio --> <line class="async" x1="756" y1="405" x2="69" y2="405" />
+  <text
+    class="msg" x="390" y="400">🔊 Audio plays</text>
+</svg>

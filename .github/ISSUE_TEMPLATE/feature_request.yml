@@ -1,0 +1,48 @@
+name: Feature Request
+description: Suggest an improvement or new feature
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make cc-vox better? We'd love to hear it!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this solve, or what use case does it enable?
+      placeholder: "I want to use a different TTS service that isn't currently supported."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you think this should work?
+      placeholder: "Add support for XYZ TTS by creating a new backend in hooks/tts/."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered other approaches?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of cc-vox does this relate to?
+      options:
+        - TTS backends
+        - Voice catalog
+        - Hook system
+        - Configuration
+        - Slash commands
+        - Documentation
+        - Other
+    validations:
+      required: true

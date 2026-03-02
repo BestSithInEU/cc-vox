@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" fill="none">
+  <defs>
+    <filter id="h-glow-pink" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="h-glow-cyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="h-glow-text" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="h-glow-sub" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="h-ambient" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="35" />
+    </filter>
+    <filter id="h-ambient-sm" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="20" />
+    </filter>
+
+    <linearGradient id="h-neon-pink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF2D95" />
+      <stop offset="100%" stop-color="#F72585" />
+    </linearGradient>
+    <linearGradient id="h-neon-cyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00F5FF" />
+      <stop offset="100%" stop-color="#0CF4E9" />
+    </linearGradient>
+    <linearGradient id="h-text-vox" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF2D95" />
+      <stop offset="50%" stop-color="#B026FF" />
+      <stop offset="100%" stop-color="#00F5FF" />
+    </linearGradient>
+    <linearGradient id="h-tagline-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F72585" stop-opacity="0.75" />
+      <stop offset="100%" stop-color="#00F5FF" stop-opacity="0.75" />
+    </linearGradient>
+    <linearGradient id="h-horizon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F72585" stop-opacity="0" />
+      <stop offset="20%" stop-color="#F72585" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#B026FF" stop-opacity="0.4" />
+      <stop offset="80%" stop-color="#00F5FF" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#00F5FF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Fade-out mask for reflection -->
+    <linearGradient id="h-reflect-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="white" stop-opacity="0" />
+    </linearGradient>
+    <mask id="h-reflect-mask">
+      <rect x="400" y="148" width="400" height="80" fill="url(#h-reflect-fade)" />
+    </mask>
+
+    <style>
+      .hp1 { animation: hp1 2.8s ease-in-out infinite; transform-origin: 518px 100px; }
+      .hp2 { animation: hp2 2.8s ease-in-out infinite 0.25s; transform-origin: 548px 100px; }
+      .hp3 { animation: hp3 2.8s ease-in-out infinite 0.5s; transform-origin: 578px 100px; }
+      .hp4 { animation: hp4 2.8s ease-in-out infinite 0.75s; transform-origin: 608px 100px; }
+      .hp5 { animation: hp5 2.8s ease-in-out infinite 1.0s; transform-origin: 638px 100px; }
+      .hp6 { animation: hp6 2.8s ease-in-out infinite 0.15s; transform-origin: 668px 100px; }
+      .hp7 { animation: hp7 2.8s ease-in-out infinite 0.4s; transform-origin: 698px 100px; }
+
+      .hc1 { animation: hc1 2.8s ease-in-out infinite 0.35s; transform-origin: 533px 100px; }
+      .hc2 { animation: hc2 2.8s ease-in-out infinite 0.6s; transform-origin: 563px 100px; }
+      .hc3 { animation: hc3 2.8s ease-in-out infinite 0.1s; transform-origin: 593px 100px; }
+      .hc4 { animation: hc4 2.8s ease-in-out infinite 0.85s; transform-origin: 623px 100px; }
+      .hc5 { animation: hc5 2.8s ease-in-out infinite 0.2s; transform-origin: 653px 100px; }
+      .hc6 { animation: hc6 2.8s ease-in-out infinite 0.7s; transform-origin: 683px 100px; }
+
+      .h-horizon-line { animation: h-breathe 3.5s ease-in-out infinite; }
+      .h-ambient-glow { animation: h-ambPulse 4.5s ease-in-out infinite; }
+
+      @keyframes hp1 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.5); } }
+      @keyframes hp2 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.4); } }
+      @keyframes hp3 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.7); } }
+      @keyframes hp4 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.5); } }
+      @keyframes hp5 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.6); } }
+      @keyframes hp6 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.3); } }
+      @keyframes hp7 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.55); } }
+      @keyframes hc1 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.35); } }
+      @keyframes hc2 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.6); } }
+      @keyframes hc3 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.4); } }
+      @keyframes hc4 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.65); } }
+      @keyframes hc5 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.45); } }
+      @keyframes hc6 { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.5); } }
+      @keyframes h-breathe { 0%,100% { opacity: 0.75; } 50% { opacity: 1; } }
+      @keyframes h-ambPulse { 0%,100% { opacity: 0.2; } 50% { opacity: 0.35; } }
+    </style>
+  </defs>
+
+  <!-- Ambient glow behind waveform -->
+  <ellipse class="h-ambient-glow" cx="608" cy="95" rx="110" ry="70" fill="#B026FF"
+    filter="url(#h-ambient)" opacity="0.25" />
+  <ellipse cx="560" cy="100" rx="60" ry="40" fill="#F72585"
+    filter="url(#h-ambient-sm)" opacity="0.08" />
+  <ellipse cx="660" cy="100" rx="60" ry="40" fill="#00F5FF"
+    filter="url(#h-ambient-sm)" opacity="0.08" />
+
+  <!-- Horizon line -->
+  <rect class="h-horizon-line" x="200" y="148" width="800" height="1.5" fill="url(#h-horizon)" />
+
+  <!-- Waveform reflection (mirrored below horizon, fades out) -->
+  <g mask="url(#h-reflect-mask)" transform="translate(0, 296) scale(1, -1)">
+    <!-- Pink bars (same as above) -->
+    <rect x="512" y="70" width="7" height="40" rx="3.5" fill="url(#h-neon-pink)" opacity="0.35" />
+    <rect x="542" y="42" width="7" height="96" rx="3.5" fill="url(#h-neon-pink)" opacity="0.6" />
+    <rect x="572" y="30" width="7" height="120" rx="3.5" fill="url(#h-neon-pink)" />
+    <rect x="602" y="35" width="7" height="110" rx="3.5" fill="url(#h-neon-pink)" opacity="0.8" />
+    <rect x="632" y="52" width="7" height="76" rx="3.5" fill="url(#h-neon-pink)" opacity="0.5" />
+    <rect x="662" y="38" width="7" height="104" rx="3.5" fill="url(#h-neon-pink)" opacity="0.7" />
+    <rect x="692" y="65" width="7" height="50" rx="3.5" fill="url(#h-neon-pink)" opacity="0.35" />
+    <!-- Cyan bars (same as above) -->
+    <rect x="527" y="58" width="7" height="64" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.4" />
+    <rect x="557" y="48" width="7" height="84" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.75" />
+    <rect x="587" y="38" width="7" height="104" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.8" />
+    <rect x="617" y="45" width="7" height="90" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.7" />
+    <rect x="647" y="40" width="7" height="100" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.75" />
+    <rect x="677" y="55" width="7" height="70" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.4" />
+  </g>
+
+  <!-- Waveform — pink bars -->
+  <g filter="url(#h-glow-pink)">
+    <rect class="hp1" x="512" y="70" width="7" height="40" rx="3.5" fill="url(#h-neon-pink)" opacity="0.35" />
+    <rect class="hp2" x="542" y="42" width="7" height="96" rx="3.5" fill="url(#h-neon-pink)" opacity="0.6" />
+    <rect class="hp3" x="572" y="30" width="7" height="120" rx="3.5" fill="url(#h-neon-pink)" />
+    <rect class="hp4" x="602" y="35" width="7" height="110" rx="3.5" fill="url(#h-neon-pink)" opacity="0.8" />
+    <rect class="hp5" x="632" y="52" width="7" height="76" rx="3.5" fill="url(#h-neon-pink)" opacity="0.5" />
+    <rect class="hp6" x="662" y="38" width="7" height="104" rx="3.5" fill="url(#h-neon-pink)" opacity="0.7" />
+    <rect class="hp7" x="692" y="65" width="7" height="50" rx="3.5" fill="url(#h-neon-pink)" opacity="0.35" />
+  </g>
+
+  <!-- Waveform — cyan bars (interleaved) -->
+  <g filter="url(#h-glow-cyan)">
+    <rect class="hc1" x="527" y="58" width="7" height="64" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.4" />
+    <rect class="hc2" x="557" y="48" width="7" height="84" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.75" />
+    <rect class="hc3" x="587" y="38" width="7" height="104" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.8" />
+    <rect class="hc4" x="617" y="45" width="7" height="90" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.7" />
+    <rect class="hc5" x="647" y="40" width="7" height="100" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.75" />
+    <rect class="hc6" x="677" y="55" width="7" height="70" rx="3.5" fill="url(#h-neon-cyan)" opacity="0.4" />
+  </g>
+
+  <!-- "cc-vox" text -->
+  <text text-anchor="middle" x="600" y="218"
+    font-family="'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace"
+    font-size="72" font-weight="700" letter-spacing="-1.5">
+    <tspan filter="url(#h-glow-text)" fill="#E2E8F0">cc</tspan><tspan fill="#4A5568">-</tspan><tspan filter="url(#h-glow-text)" fill="url(#h-text-vox)">vox</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text filter="url(#h-glow-sub)" text-anchor="middle" x="600" y="252"
+    font-family="'Inter','SF Pro Display',system-ui,sans-serif" font-size="14"
+    fill="url(#h-tagline-grad)" letter-spacing="4.5">VOICE FEEDBACK FOR CLAUDE CODE</text>
+
+  <!-- Description -->
+  <text text-anchor="middle" x="600" y="290"
+    font-family="'Inter','SF Pro Display',system-ui,sans-serif" font-size="17"
+    fill="#94A3B8" letter-spacing="0.3">Give Claude Code a voice.</text>
+  <text text-anchor="middle" x="600" y="316"
+    font-family="'Inter','SF Pro Display',system-ui,sans-serif" font-size="14.5"
+    fill="#64748B" letter-spacing="0.2">Spoken summaries after every response — zero friction, multiple TTS backends.</text>
+</svg>

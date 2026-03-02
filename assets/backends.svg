@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 190" fill="none">
+  <defs>
+    <filter id="glow-g" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b" />
+      <feComposite in="SourceGraphic" in2="b" operator="over" />
+    </filter>
+    <linearGradient id="card-kokoro" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E3A5F" />
+      <stop offset="100%" stop-color="#172554" />
+    </linearGradient>
+    <linearGradient id="card-fish" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#422006" />
+      <stop offset="100%" stop-color="#351C05" />
+    </linearGradient>
+    <linearGradient id="card-pocket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#052E16" />
+      <stop offset="100%" stop-color="#042214" />
+    </linearGradient>
+    <style>
+      .card { rx: 12; }
+      .card-title { font-family: 'SF Mono','Fira Code',monospace; font-size: 16px; font-weight: 700;
+      }
+      .card-detail { font-family: 'Inter',system-ui,sans-serif; font-size: 11.5px; }
+      .card-tag { font-family: 'SF Mono','Fira Code',monospace; font-size: 10px; font-weight: 600; }
+      .rec { font-family: 'Inter',system-ui,sans-serif; font-size: 9px; font-weight: 700;
+      letter-spacing: 1.5px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="190" rx="16" fill="#0D1117" />
+
+  <!-- Kokoro card -->
+  <rect class="card" x="20" y="20" width="240" height="150" fill="url(#card-kokoro)"
+    stroke="#3B82F6" stroke-width="1.2" />
+  <!-- Title -->
+  <text class="card-title" x="36" y="44" fill="#60A5FA" filter="url(#glow-g)">🗣 Kokoro</text>
+  <!-- Recommended badge — centered text -->
+  <rect x="36" y="54" width="92" height="18" rx="9" fill="#3B82F6" opacity="0.25" />
+  <text class="rec" x="82" y="67" fill="#60A5FA">RECOMMENDED</text>
+  <!-- Details -->
+  <text class="card-detail" x="36" y="92" fill="#93C5FD">CPU / Docker</text>
+  <text class="card-detail" x="36" y="110" fill="#7DD3FC">Quality: <tspan fill="#60A5FA"
+      font-weight="600">Great</tspan></text>
+  <text class="card-detail" x="36" y="128" fill="#7DD3FC">Latency: <tspan fill="#60A5FA"
+      font-weight="600">~1s</tspan></text>
+  <!-- Port tag -->
+  <rect x="36" y="138" width="55" height="20" rx="4" fill="#1E40AF" opacity="0.35" />
+  <text class="card-tag" x="44" y="152" fill="#93C5FD">:32612</text>
+  <!-- Setup -->
+  <text class="card-detail" x="102" y="152" fill="#64748B">one docker run</text>
+
+  <!-- Fish Speech card -->
+  <rect class="card" x="280" y="20" width="240" height="150" fill="url(#card-fish)" stroke="#F59E0B"
+    stroke-width="1.2" />
+  <text class="card-title" x="296" y="44" fill="#FBBF24" filter="url(#glow-g)">🐟 Fish Speech</text>
+  <text class="card-detail" x="296" y="68" fill="#FDE68A">GPU / Docker + NVIDIA</text>
+  <text class="card-detail" x="296" y="86" fill="#FCD34D">Quality: <tspan fill="#FBBF24"
+      font-weight="600">Best</tspan></text>
+  <text class="card-detail" x="296" y="104" fill="#FCD34D">Latency: <tspan fill="#FBBF24"
+      font-weight="600">~0.5s</tspan></text>
+  <rect x="296" y="138" width="55" height="20" rx="4" fill="#92400E" opacity="0.35" />
+  <text class="card-tag" x="304" y="152" fill="#FDE68A">:32611</text>
+  <text class="card-detail" x="362" y="152" fill="#64748B">docker + GPU</text>
+
+  <!-- pocket-tts card -->
+  <rect class="card" x="540" y="20" width="240" height="150" fill="url(#card-pocket)"
+    stroke="#10B981" stroke-width="1.2" />
+  <text class="card-title" x="556" y="44" fill="#34D399" filter="url(#glow-g)">📦 pocket-tts</text>
+  <text class="card-detail" x="556" y="68" fill="#A7F3D0">CPU / uvx (auto-starts)</text>
+  <text class="card-detail" x="556" y="86" fill="#6EE7B7">Quality: <tspan fill="#34D399"
+      font-weight="600">Good</tspan></text>
+  <text class="card-detail" x="556" y="104" fill="#6EE7B7">Latency: <tspan fill="#34D399"
+      font-weight="600">~2s</tspan></text>
+  <rect x="556" y="138" width="48" height="20" rx="4" fill="#065F46" opacity="0.35" />
+  <text class="card-tag" x="564" y="152" fill="#A7F3D0">:8000</text>
+  <text class="card-detail" x="614" y="152" fill="#64748B">zero setup</text>
+</svg>

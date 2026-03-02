@@ -1,0 +1,106 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""
+say - Multi-backend TTS script for Claude Code voice plugin
+
+Supports 3 backends with auto-detection:
+  1. Fish Speech (GPU, Docker :32611) - best quality if GPU is idle
+  2. Kokoro (CPU, Docker :32612) - great quality, always-available
+  3. pocket-tts (CPU, uvx :8000) - lightweight zero-setup fallback
+
+Usage: say [--voice <voice>] [--session <id>] [--speed <n>] <text>
+"""
+
+from __future__ import annotations
+
+import argparse
+import signal
+import sys
+from pathlib import Path
+
+# ── Resolve imports from hooks/ ──────────────────────────────────────────────
+
+HOOKS_DIR = Path(__file__).resolve().parent.parent / "hooks"
+sys.path.insert(0, str(HOOKS_DIR))
+
+from tts import select_backend
+from tts._playback import PlaybackLock, play_audio
+from tts._session_state import SessionState
+from voice_common import get_voice_config
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Multi-backend TTS for Claude Code voice plugin")
+    parser.add_argument("--voice", default="", help="Voice name")
+    parser.add_argument("--session", default="", help="Session ID for stop hook")
+    parser.add_argument("--speed", type=float, default=0.0,
+                        help="Speech speed 0.5-2.0 (kokoro only, 0=use config)")
+    parser.add_argument("text", nargs="+", help="Text to speak")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    text = " ".join(args.text)
+
+    if not text.strip():
+        print("Error: No text provided", file=sys.stderr)
+        return 1
+
+    config = get_voice_config()
+    if not config.enabled:
+        return 0
+
+    voice = args.voice or config.voice
+    speed = args.speed if args.speed > 0 else config.speed
+
+    session = SessionState(args.session)
+    lock = PlaybackLock()
+
+    def on_signal(signum, frame):
+        lock.release()
+        session.cleanup()
+        sys.exit(1)
+
+    signal.signal(signal.SIGINT, on_signal)
+    signal.signal(signal.SIGTERM, on_signal)
+
+    if not lock.acquire():
+        print("Error: Timeout waiting for audio lock after 30s", file=sys.stderr)
+        session.mark_failed()
+        return 1
+
+    try:
+        backend = select_backend(config.backend, config.fallback)
+
+        if backend is None:
+            print("Error: No TTS service available", file=sys.stderr)
+            session.mark_failed()
+            return 1
+
+        print(f"TTS backend: {backend.name}", file=sys.stderr)
+
+        audio = backend.generate(text, voice, speed)
+        if not audio:
+            print("Error: Generated audio is empty", file=sys.stderr)
+            session.mark_failed()
+            return 1
+
+        play_audio(audio)
+        session.mark_done()
+        return 0
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        session.mark_failed()
+        return 1
+    finally:
+        lock.release()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

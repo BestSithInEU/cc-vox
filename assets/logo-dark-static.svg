@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" fill="none">
+  <defs>
+    <filter id="glow-pink" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glow-text" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glow-sub" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <linearGradient id="neon-pink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF2D95"/>
+      <stop offset="100%" stop-color="#F72585"/>
+    </linearGradient>
+    <linearGradient id="neon-cyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00F5FF"/>
+      <stop offset="100%" stop-color="#0CF4E9"/>
+    </linearGradient>
+    <linearGradient id="text-vox" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF2D95"/>
+      <stop offset="50%" stop-color="#B026FF"/>
+      <stop offset="100%" stop-color="#00F5FF"/>
+    </linearGradient>
+    <linearGradient id="tagline-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F72585" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#00F5FF" stop-opacity="0.8"/>
+    </linearGradient>
+    <linearGradient id="horizon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F72585" stop-opacity="0"/>
+      <stop offset="15%" stop-color="#F72585" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#B026FF" stop-opacity="0.45"/>
+      <stop offset="85%" stop-color="#00F5FF" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#00F5FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Horizon line -->
+  <rect x="10" y="103" width="500" height="1.2" fill="url(#horizon)"/>
+
+  <!-- Waveform — pink bars -->
+  <g filter="url(#glow-pink)">
+    <rect x="30" y="58" width="5.5" height="26" rx="2.75" fill="url(#neon-pink)" opacity="0.35"/>
+    <rect x="53" y="30" width="5.5" height="78" rx="2.75" fill="url(#neon-pink)" opacity="0.65"/>
+    <rect x="76" y="20" width="5.5" height="98" rx="2.75" fill="url(#neon-pink)"/>
+    <rect x="99" y="28" width="5.5" height="82" rx="2.75" fill="url(#neon-pink)" opacity="0.65"/>
+    <rect x="122" y="56" width="5.5" height="30" rx="2.75" fill="url(#neon-pink)" opacity="0.35"/>
+  </g>
+
+  <!-- Waveform — cyan bars (interleaved) -->
+  <g filter="url(#glow-cyan)">
+    <rect x="41.5" y="44" width="5.5" height="50" rx="2.75" fill="url(#neon-cyan)" opacity="0.45"/>
+    <rect x="64.5" y="36" width="5.5" height="66" rx="2.75" fill="url(#neon-cyan)" opacity="0.8"/>
+    <rect x="87.5" y="32" width="5.5" height="74" rx="2.75" fill="url(#neon-cyan)" opacity="0.8"/>
+    <rect x="110.5" y="42" width="5.5" height="54" rx="2.75" fill="url(#neon-cyan)" opacity="0.45"/>
+  </g>
+
+  <!-- cc-vox text -->
+  <text y="92" font-family="'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace" font-size="62" font-weight="700" letter-spacing="-1">
+    <tspan x="152" filter="url(#glow-text)" fill="#E2E8F0">cc</tspan><tspan fill="#4A5568">-</tspan><tspan filter="url(#glow-text)" fill="url(#text-vox)">vox</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text filter="url(#glow-sub)" x="155" y="122" font-family="'Inter','SF Pro Display',system-ui,sans-serif" font-size="13" fill="url(#tagline-grad)" letter-spacing="3.5">VOICE FEEDBACK FOR CLAUDE CODE</text>
+</svg>

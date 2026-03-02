@@ -1,0 +1,18 @@
+# <type>: <subject> (max 50 chars)
+#
+# Types:
+#   feat     — new feature
+#   fix      — bug fix
+#   refactor — restructure without changing behavior
+#   docs     — documentation only
+#   style    — formatting, missing semicolons, etc.
+#   test     — adding or fixing tests
+#   chore    — build, CI, dependencies, tooling
+#   perf     — performance improvement
+#
+# Rules:
+#   - Imperative mood ("add" not "added")
+#   - No period at the end of the subject
+#   - Blank line between subject and body
+#   - Body: explain *what* and *why*, not *how*
+#   - Reference issues: "Closes #123" or "Fixes #456"

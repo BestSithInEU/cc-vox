@@ -1,0 +1,24 @@
+{
+  "name": "cc-vox",
+  "owner": {
+    "name": "BestSithInEU"
+  },
+  "metadata": {
+    "description": "Claude Code Voice — speaks a short summary aloud after every response"
+  },
+  "plugins": [
+    {
+      "name": "voice",
+      "source": "./",
+      "version": "0.1.0",
+      "description": "Multi-backend TTS voice feedback for Claude Code",
+      "author": {
+        "name": "BestSithInEU"
+      },
+      "repository": "https://github.com/BestSithInEU/cc-vox",
+      "license": "MIT",
+      "keywords": ["voice", "tts", "qwen3-tts", "kokoro", "fish-speech", "chatterbox"],
+      "category": "accessibility"
+    }
+  ]
+}
