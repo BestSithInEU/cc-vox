@@ -1,0 +1,58 @@
+/* Hero banner on landing page */
+.hero-banner {
+  display: block;
+  max-width: 860px;
+  margin: 1rem auto 0;
+}
+
+.hero-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* CTA buttons row */
+.hero-cta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0.5rem 0 2.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-cta .md-button {
+  font-size: 0.85rem;
+  padding: 0.6em 1.6em;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.hero-cta .md-button--primary {
+  background: linear-gradient(135deg, #B026FF, #7C3AED);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(176, 38, 255, 0.3);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+.hero-cta .md-button--primary:hover {
+  box-shadow: 0 4px 20px rgba(176, 38, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Force 2-column grid for feature cards on the home page */
+.md-typeset .grid.cards {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+@media (max-width: 600px) {
+  .md-typeset .grid.cards {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Hide the default h1 when hero banner is present */
+.md-content h1:first-of-type {
+  display: none;
+}

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <defs>
+    <filter id="n-gp" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+    <filter id="n-gc" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+    <linearGradient id="n-pk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF2D95"/>
+      <stop offset="100%" stop-color="#F72585"/>
+    </linearGradient>
+    <linearGradient id="n-cn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00F5FF"/>
+      <stop offset="100%" stop-color="#0CF4E9"/>
+    </linearGradient>
+  </defs>
+  <!-- Pink bars -->
+  <g filter="url(#n-gp)">
+    <rect x="4"  y="16" width="3.5" height="14" rx="1.75" fill="url(#n-pk)" opacity="0.4"/>
+    <rect x="12" y="8"  width="3.5" height="30" rx="1.75" fill="url(#n-pk)" opacity="0.7"/>
+    <rect x="20" y="4"  width="3.5" height="38" rx="1.75" fill="url(#n-pk)"/>
+    <rect x="28" y="7"  width="3.5" height="32" rx="1.75" fill="url(#n-pk)" opacity="0.7"/>
+    <rect x="36" y="15" width="3.5" height="16" rx="1.75" fill="url(#n-pk)" opacity="0.4"/>
+  </g>
+  <!-- Cyan bars -->
+  <g filter="url(#n-gc)">
+    <rect x="8"  y="12" width="3.5" height="22" rx="1.75" fill="url(#n-cn)" opacity="0.5"/>
+    <rect x="16" y="10" width="3.5" height="26" rx="1.75" fill="url(#n-cn)" opacity="0.8"/>
+    <rect x="24" y="6"  width="3.5" height="34" rx="1.75" fill="url(#n-cn)" opacity="0.8"/>
+    <rect x="32" y="11" width="3.5" height="24" rx="1.75" fill="url(#n-cn)" opacity="0.5"/>
+  </g>
+</svg>
