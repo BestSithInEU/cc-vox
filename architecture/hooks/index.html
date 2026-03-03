@@ -1461,7 +1461,7 @@
     FindSession --&gt; GetMsg[Get last assistant message&lt;br&gt;with retry logic]
     GetMsg --&gt; S1{📢 marker&lt;br&gt;in response?}
     S1 --&gt;|Yes| Extract[Extract marker text]
-    S1 --&gt;|No| S2{Response&lt;br&gt;&lt;= max_words?}
+    S1 --&gt;|No| S2{Response&lt;br&gt;&lt;= max_sentences?}
     S2 --&gt;|Yes| Direct[Speak response directly]
     S2 --&gt;|No| S3[Call headless Claude&lt;br&gt;for summary]
     S3 --&gt; HasSummary{Summary&lt;br&gt;generated?}
