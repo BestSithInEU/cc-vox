@@ -1,6 +1,6 @@
 {
   "name": "voice",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-backend TTS voice feedback for Claude Code",
   "author": { "name": "BestSithInEU" }
 }
