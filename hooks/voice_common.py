@@ -116,8 +116,8 @@ def _migrate_old_config() -> dict[str, object] | None:
     return values
 
 
-def _write_toml(config: VoiceConfig) -> None:
-    """Write config to cc-vox.toml, preserving the commented voice catalog."""
+def _build_toml(config: VoiceConfig) -> str:
+    """Build TOML string from config."""
     lines = [
         "[core]",
         f'enabled = {"true" if config.enabled else "false"}',
@@ -146,7 +146,18 @@ def _write_toml(config: VoiceConfig) -> None:
 
     lines += [""] + _voice_comment_lines() + [""]
 
-    DEFAULT_CONFIG_PATH.write_text("\n".join(lines))
+    return "\n".join(lines)
+
+
+def _write_toml(config: VoiceConfig) -> None:
+    """Write config to cc-vox.toml if content changed."""
+    content = _build_toml(config)
+    try:
+        if DEFAULT_CONFIG_PATH.read_text() == content:
+            return
+    except OSError:
+        pass
+    DEFAULT_CONFIG_PATH.write_text(content)
 
 
 def get_voice_config() -> VoiceConfig:
@@ -206,6 +217,9 @@ def get_voice_config() -> VoiceConfig:
 
     if "just_disabled" in internal:
         config.just_disabled = bool(internal["just_disabled"])
+
+    # Always rewrite to keep config in sync with current schema
+    _write_toml(config)
 
     return config
 
