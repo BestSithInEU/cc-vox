@@ -14,6 +14,7 @@ import subprocess
 def summarize_with_claude(
     conversation: list[tuple[str, str]],
     custom_prompt: str = "",
+    max_sentences: int = 2,
 ) -> str | None:
     """Use headless Claude to generate a 1-sentence summary."""
     if not conversation:
@@ -48,8 +49,9 @@ def summarize_with_claude(
     base_instruction = (
         "You are the assistant who just wrote that message. Give a brief SPOKEN "
         "voice update to the user. Match the user's tone - if they're casual or "
-        "use colorful language, mirror that. IMPORTANT: Keep it to 1-2 sentences "
-        "max, and NEVER longer than the original message. Since this will be "
+        "use colorful language, mirror that. IMPORTANT: Keep it to "
+        f"{max_sentences} sentence{'s' if max_sentences != 1 else ''} max, "
+        "and NEVER longer than the original message. Since this will be "
         "spoken aloud, avoid file paths, UUIDs, hashes, or technical identifiers "
         "- use natural language instead (e.g., 'the config file' not "
         "'/Users/foo/bar/config.json'). What would you say?"
@@ -86,8 +88,19 @@ YOUR LAST MESSAGE:
 
         if result.returncode == 0:
             data = json.loads(result.stdout)
-            summary = data.get("result", "").strip()
-            return summary
+            if isinstance(data, dict):
+                summary = data.get("result", "").strip()
+            elif isinstance(data, list):
+                # Content block array: [{"type": "text", "text": "..."}]
+                parts = [
+                    block.get("text", "")
+                    for block in data
+                    if isinstance(block, dict) and block.get("type") == "text"
+                ]
+                summary = " ".join(parts).strip()
+            else:
+                summary = str(data).strip()
+            return summary if summary else None
 
     except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
         pass
