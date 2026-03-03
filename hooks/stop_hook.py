@@ -23,8 +23,8 @@ from session import (
     find_session_file,
     get_last_assistant_message,
     get_recent_conversation,
-    is_short_response,
-    trim_to_words,
+    is_short_response_sentences,
+    trim_to_sentences,
 )
 from summarize import summarize_with_claude
 from voice_common import get_voice_config
@@ -88,31 +88,33 @@ def main():
 
     last_assistant_msg = get_last_assistant_message(session_file)
 
-    flexible_limit = int(config.max_words * 1.5)
+    flexible_limit = config.max_sentences + 1
 
     # Strategy 1: Try to extract 📢 marker (instant!)
     if last_assistant_msg:
         marker_summary = extract_voice_marker(last_assistant_msg)
         if marker_summary:
-            summary = trim_to_words(marker_summary, flexible_limit)
+            summary = trim_to_sentences(marker_summary, flexible_limit)
 
     # Strategy 2: If no marker but response is short, speak directly
     if not summary and last_assistant_msg:
-        if is_short_response(last_assistant_msg, max_words=config.max_words):
+        if is_short_response_sentences(last_assistant_msg, config.max_sentences):
             summary = last_assistant_msg
 
     # Strategy 3: Fall back to headless Claude summarization (slower)
     if not summary and last_assistant_msg:
         conversation = get_recent_conversation(session_file)
         if conversation:
-            summary = summarize_with_claude(conversation, config.prompt)
+            summary = summarize_with_claude(
+                conversation, config.prompt, config.max_sentences,
+            )
             if summary:
-                summary = trim_to_words(summary, flexible_limit)
+                summary = trim_to_sentences(summary, flexible_limit)
                 used_headless = True
 
     # Strategy 4: Last resort - truncate last message
     if not summary and last_assistant_msg:
-        summary = trim_to_words(last_assistant_msg, config.max_words)
+        summary = trim_to_sentences(last_assistant_msg, config.max_sentences)
 
     if not summary:
         print(json.dumps({"decision": "approve"}))

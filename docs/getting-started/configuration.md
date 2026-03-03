@@ -12,7 +12,7 @@ backend = "auto"         # auto | kokoro | fish-speech | pocket-tts
 
 [tuning]
 speed = 1.0              # 0.5-2.0 (kokoro only)
-max_words = 25           # max spoken summary length
+max_sentences = 2        # max sentences in spoken summary (1-10)
 fallback = true          # try other backends when forced one is down
 
 [style]
@@ -34,7 +34,7 @@ prompt = ""              # custom voice personality instruction
 | Key | Type | Default | Range | Description |
 |:----|:-----|:-------:|:-----:|:------------|
 | `speed` | float | `1.0` | 0.5--2.0 | Speech speed (Kokoro only) |
-| `max_words` | int | `25` | 5--100 | Maximum words in spoken summary |
+| `max_sentences` | int | `2` | 1--10 | Maximum sentences in spoken summary |
 | `fallback` | bool | `true` | — | Try other backends if forced one is down |
 
 ### `[style]` Section
@@ -65,7 +65,7 @@ prompt = ""              # custom voice personality instruction
 /voice:speak backend kokoro    # Set backend
 /voice:speak speed 1.3         # Set speed
 /voice:speak prompt be chill   # Set personality
-/voice:speak max_words 40      # Longer summaries
+/voice:speak max_sentences 4   # Longer summaries
 ```
 
 ### Via Direct File Edit

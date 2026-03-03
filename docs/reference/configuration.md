@@ -18,7 +18,7 @@ backend = "auto"         # auto | kokoro | fish-speech | pocket-tts | chatterbox
 
 [tuning]
 speed = 1.0              # 0.5-2.0 (kokoro only)
-max_words = 25           # max spoken summary length
+max_sentences = 2        # max sentences in spoken summary (1-10)
 fallback = true          # try other backends when forced one is down
 
 [style]
@@ -83,14 +83,14 @@ prompt = ""
     speed = 1.3
     ```
 
-#### `max_words`
+#### `max_sentences`
 
-:   **Type:** `int` | **Default:** `25` | **Range:** `5` -- `100`
+:   **Type:** `int` | **Default:** `2` | **Range:** `1` -- `10`
 
-    Maximum words in the spoken summary. Affects both the `📢` marker reminder and the truncation fallback.
+    Maximum sentences in the spoken summary. Affects both the `📢` marker reminder and the truncation fallback.
 
     ```toml
-    max_words = 40
+    max_sentences = 4
     ```
 
 #### `fallback`

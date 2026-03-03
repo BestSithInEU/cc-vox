@@ -13,7 +13,7 @@ Enable, disable, or configure voice feedback.
 - `/speak prompt` - Clear custom prompt
 - `/speak backend <name>` - Switch TTS backend (auto, kokoro, fish-speech, pocket-tts, chatterbox, qwen3-tts)
 - `/speak speed <value>` - Set speech speed (0.5-2.0, kokoro only)
-- `/speak max_words <value>` - Set max spoken summary length (5-100)
+- `/speak max_sentences <value>` - Set max sentences in spoken summary (1-10)
 - `/speak fallback on|off` - Toggle backend fallback behavior
 
 **Config file:** `~/.claude/cc-vox.toml`
@@ -26,7 +26,7 @@ backend = "auto"
 
 [tuning]
 speed = 1.0
-max_words = 25
+max_sentences = 2
 fallback = true
 
 [style]
@@ -66,8 +66,8 @@ prompt = "be upbeat and encouraging"
   "TTS backend set to <name>."
 - When `speed <value>`: Set `speed = <value>` in `[tuning]` (clamped 0.5-2.0), tell user:
   "Speech speed set to <value>."
-- When `max_words <value>`: Set `max_words = <value>` in `[tuning]` (clamped 5-100), tell user:
-  "Max spoken words set to <value>."
+- When `max_sentences <value>`: Set `max_sentences = <value>` in `[tuning]` (clamped 1-10), tell user:
+  "Max sentences set to <value>."
 - When `fallback on`: Set `fallback = true` in `[tuning]`, tell user:
   "Backend fallback enabled."
 - When `fallback off`: Set `fallback = false` in `[tuning]`, tell user:

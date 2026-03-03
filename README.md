@@ -236,7 +236,7 @@ Voice feedback is automatic. Claude speaks a summary after each response.
 /voice:speak backend kokoro   Force backend
 /voice:speak backend auto     Auto-detect (default)
 /voice:speak speed 1.3        Adjust speech speed (kokoro)
-/voice:speak max_words 40     Longer summaries
+/voice:speak max_sentences 4  Longer summaries
 /voice:speak fallback on      Try other backends if forced one is down
 ```
 
@@ -272,7 +272,7 @@ backend = "auto"         # auto | kokoro | fish-speech | pocket-tts | chatterbox
 
 [tuning]
 speed = 1.0              # 0.5-2.0 (kokoro only)
-max_words = 25           # max spoken summary length
+max_sentences = 2        # max sentences in spoken summary (1-10)
 fallback = true          # try other backends when forced one is down
 
 [style]
@@ -284,7 +284,7 @@ prompt = "be upbeat and encouraging"
 | Setting | Default | Description |
 |:--------|:-------:|:------------|
 | `tuning.speed` | `1.0` | Speech speed 0.5–2.0 (kokoro only) |
-| `tuning.max_words` | `25` | Max words in spoken summary (5–100) |
+| `tuning.max_sentences` | `2` | Max sentences in spoken summary (1–10) |
 | `tuning.fallback` | `true` | Try other backends when forced one is down |
 
 ### Environment Variables

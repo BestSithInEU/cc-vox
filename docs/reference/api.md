@@ -214,7 +214,7 @@ class VoiceConfig:
     voice: str = "af_heart"
     backend: str = "auto"
     speed: float = 1.0
-    max_words: int = 25
+    max_sentences: int = 2
     fallback: bool = True
     prompt: str = ""
     just_disabled: bool = False

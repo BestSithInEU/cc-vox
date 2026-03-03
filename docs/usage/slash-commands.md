@@ -35,7 +35,7 @@ See the full [voice catalog](voices.md) for all available voices.
 | Command | Description |
 |:--------|:------------|
 | `/voice:speak speed <value>` | Set speech speed, 0.5--2.0 (Kokoro only) |
-| `/voice:speak max_words <value>` | Set max summary length, 5--100 words |
+| `/voice:speak max_sentences <value>` | Set max summary sentences, 1--10 |
 | `/voice:speak fallback on` | Enable backend fallback |
 | `/voice:speak fallback off` | Disable backend fallback |
 
@@ -61,7 +61,7 @@ See the full [voice catalog](voices.md) for all available voices.
 
 # Force Kokoro backend with longer summaries
 /voice:speak backend kokoro
-/voice:speak max_words 50
+/voice:speak max_sentences 4
 
 # Disable voice
 /voice:speak stop

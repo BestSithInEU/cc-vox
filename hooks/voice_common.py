@@ -25,7 +25,7 @@ backend = "auto"         # auto | kokoro | fish-speech | pocket-tts | chatterbox
 
 [tuning]
 speed = 1.0              # 0.5-2.0 (kokoro only)
-max_words = 25           # max spoken summary length
+max_sentences = 2        # max sentences in spoken summary (1-10)
 fallback = true          # try other backends when forced one is down
 
 [style]
@@ -66,7 +66,7 @@ class VoiceConfig:
     voice: str = "af_heart"
     backend: str = "auto"
     speed: float = 1.0
-    max_words: int = 25
+    max_sentences: int = 2
     fallback: bool = True
     prompt: str = ""
     just_disabled: bool = False
@@ -130,9 +130,9 @@ def _write_toml(config: VoiceConfig) -> None:
         f"speed = {config.speed}"
         + ("              # 0.5-2.0 (kokoro only)"
            if config.speed == 1.0 else ""),
-        f"max_words = {config.max_words}"
-        + ("           # max spoken summary length"
-           if config.max_words == 25 else ""),
+        f"max_sentences = {config.max_sentences}"
+        + ("        # max sentences in spoken summary (1-10)"
+           if config.max_sentences == 2 else ""),
         f'fallback = {"true" if config.fallback else "false"}'
         + ("          # try other backends when forced one is down"
            if config.fallback else ""),
@@ -196,8 +196,8 @@ def get_voice_config() -> VoiceConfig:
 
     if "speed" in tuning:
         config.speed = _clamp(float(tuning["speed"]), 0.5, 2.0)
-    if "max_words" in tuning:
-        config.max_words = int(_clamp(float(tuning["max_words"]), 5, 100))
+    if "max_sentences" in tuning:
+        config.max_sentences = int(_clamp(float(tuning["max_sentences"]), 1, 10))
     if "fallback" in tuning:
         config.fallback = bool(tuning["fallback"])
 
@@ -218,7 +218,7 @@ def update_voice_config(**kwargs: object) -> VoiceConfig:
             setattr(config, key, val)
     # Validate after update
     config.speed = _clamp(config.speed, 0.5, 2.0)
-    config.max_words = int(_clamp(float(config.max_words), 5, 100))
+    config.max_sentences = int(_clamp(float(config.max_sentences), 1, 10))
     if config.backend not in VALID_BACKENDS:
         config.backend = "auto"
     _write_toml(config)
@@ -243,14 +243,15 @@ def clear_just_disabled_flag() -> None:
         _write_toml(config)
 
 
-def build_full_reminder(max_words: int = 25, custom_prompt: str = "") -> str:
+def build_full_reminder(max_sentences: int = 2, custom_prompt: str = "") -> str:
     """Build the full voice reminder for UserPromptSubmit hook."""
+    sentence_label = "1 sentence" if max_sentences == 1 else f"{max_sentences} sentences"
     reminder = (
         "Voice feedback is enabled. At the end of your response:\n"
-        f"- If ≤{max_words} words of natural speakable text, no summary needed\n"
-        f"- If ≤{max_words} words but contains code/paths/technical output, "
+        f"- If ≤{sentence_label} of natural speakable text, no summary needed\n"
+        f"- If ≤{sentence_label} but contains code/paths/technical output, "
         "ADD a 📢 summary\n"
-        "- If longer, end with: 📢 [brief spoken summary]\n\n"
+        f"- If longer, end with: 📢 [brief spoken summary, max {sentence_label}]\n\n"
         "VOICE SUMMARY STYLE:\n"
         "- Match the user's tone - if they're casual or use colorful language, "
         "mirror that\n"
@@ -269,9 +270,10 @@ def build_full_reminder(max_words: int = 25, custom_prompt: str = "") -> str:
     return reminder
 
 
-def build_short_reminder(max_words: int = 25) -> str:
+def build_short_reminder(max_sentences: int = 2) -> str:
     """Build a brief voice reminder for PostToolUse hook."""
+    sentence_label = "1 sentence" if max_sentences == 1 else f"{max_sentences} sentences"
     return (
-        f"[Voice feedback: when done, end with 📢 summary (max {max_words} words) "
-        f"if response is >{max_words} words or contains code/paths]"
+        f"[Voice feedback: when done, end with 📢 summary (max {sentence_label}) "
+        f"if response is >{sentence_label} or contains code/paths]"
     )

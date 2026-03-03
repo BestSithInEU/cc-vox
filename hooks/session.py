@@ -38,12 +38,24 @@ def find_session_file(session_id: str) -> Path | None:
     return None
 
 
-def trim_to_words(text: str, max_words: int) -> str:
-    """Trim text to max_words, adding ellipsis if truncated."""
-    words = text.split()
-    if len(words) <= max_words:
-        return text
-    return " ".join(words[:max_words]) + "..."
+def count_sentences(text: str) -> int:
+    """Count sentences in text (split on . ! ?)."""
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    return len([s for s in sentences if s])
+
+
+def trim_to_sentences(text: str, max_sentences: int) -> str:
+    """Trim text to max_sentences, adding ellipsis if truncated."""
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = [s for s in sentences if s]
+    if len(sentences) <= max_sentences:
+        return text.strip()
+    return " ".join(sentences[:max_sentences])
+
+
+def is_short_response_sentences(text: str, max_sentences: int) -> bool:
+    """Check if response is short enough to speak directly (sentence-based)."""
+    return count_sentences(text) <= max_sentences
 
 
 def extract_voice_marker(text: str) -> str | None:
@@ -55,16 +67,6 @@ def extract_voice_marker(text: str) -> str | None:
         summary = re.sub(r'^\[|\]$', '', summary)
         return summary if summary else None
     return None
-
-
-def word_count(text: str) -> int:
-    """Count words in text."""
-    return len(text.split())
-
-
-def is_short_response(text: str, max_words: int) -> bool:
-    """Check if response is short enough to speak directly."""
-    return word_count(text) <= max_words
 
 
 def extract_message_text(data: dict) -> str | None:
@@ -184,7 +186,9 @@ def get_recent_conversation(
                                     continue
 
                     if msg_type == "assistant":
-                        text = trim_to_words(text, max_assistant_words)
+                        words = text.split()
+                        if len(words) > max_assistant_words:
+                            text = " ".join(words[:max_assistant_words]) + "..."
 
                     messages.append((msg_type, text))
 

@@ -75,7 +75,7 @@ flowchart TD
     FindSession --> GetMsg[Get last assistant message<br>with retry logic]
     GetMsg --> S1{📢 marker<br>in response?}
     S1 -->|Yes| Extract[Extract marker text]
-    S1 -->|No| S2{Response<br><= max_words?}
+    S1 -->|No| S2{Response<br><= max_sentences?}
     S2 -->|Yes| Direct[Speak response directly]
     S2 -->|No| S3[Call headless Claude<br>for summary]
     S3 --> HasSummary{Summary<br>generated?}

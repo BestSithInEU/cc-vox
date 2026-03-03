@@ -72,7 +72,7 @@ This hook runs the 4-strategy summarization cascade:
 | Strategy | Speed | When |
 |:---------|:------|:-----|
 | **1. Extract `📢` marker** | Instant | Claude included a `📢` line |
-| **2. Speak directly** | Instant | Response is short enough (<=`max_words`) |
+| **2. Speak directly** | Instant | Response is short enough (<=`max_sentences`) |
 | **3. Headless Claude** | ~3--5s | Calls `claude -p` to generate a summary |
 | **4. Truncate** | Instant | Last resort — truncate the response |
 

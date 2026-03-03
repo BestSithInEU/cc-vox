@@ -29,7 +29,7 @@ def main():
         print(json.dumps({"decision": "approve"}))
         return
 
-    reminder = build_short_reminder(config.max_words)
+    reminder = build_short_reminder(config.max_sentences)
 
     print(json.dumps({
         "hookSpecificOutput": {
