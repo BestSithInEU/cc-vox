@@ -9,6 +9,9 @@ dist/
 build/
 .eggs/
 
+# Lock files
+uv.lock
+
 # Virtual environments
 .venv/
 venv/
