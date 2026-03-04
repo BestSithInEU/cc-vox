@@ -71,17 +71,22 @@ def extract_voice_marker(text: str) -> str | None:
 
 def extract_message_text(data: dict) -> str | None:
     """Extract text content from a message data dict."""
-    message = data.get("message", {})
-    content = message.get("content", "")
+    message = data.get("message")
+    if not isinstance(message, dict):
+        return None
+    content = message.get("content")
+    if content is None:
+        return None
 
     if isinstance(content, str):
-        return content.strip()
+        return content.strip() or None
     elif isinstance(content, list):
         text_parts = []
         for item in content:
             if isinstance(item, dict) and item.get("type") == "text":
                 text_parts.append(item.get("text", ""))
-        return "\n".join(text_parts).strip()
+        result = "\n".join(text_parts).strip()
+        return result or None
     return None
 
 
