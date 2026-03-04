@@ -6,12 +6,14 @@
 """
 say - Multi-backend TTS script for Claude Code voice plugin
 
-Supports 3 backends with auto-detection:
-  1. Fish Speech (GPU, Docker :32611) - best quality if GPU is idle
-  2. Kokoro (CPU, Docker :32612) - great quality, always-available
-  3. pocket-tts (CPU, uvx :8000) - lightweight zero-setup fallback
+Supports 5 backends with auto-detection and retry-with-fallback:
+  1. Qwen3-TTS (GPU, Docker :32614) - highest priority
+  2. Fish Speech (GPU, Docker :32611) - best quality if GPU is idle
+  3. Chatterbox (GPU, Docker :32613) - voice cloning
+  4. Kokoro (CPU, Docker :32612) - great quality, always-available
+  5. pocket-tts (CPU, uvx :8000) - lightweight zero-setup fallback
 
-Usage: say [--voice <voice>] [--session <id>] [--speed <n>] <text>
+Usage: say [--voice <voice>] [--session <id>] [--speed <n>] [--volume <n>] [--debug] <text>
 """
 
 from __future__ import annotations
@@ -26,9 +28,10 @@ from pathlib import Path
 HOOKS_DIR = Path(__file__).resolve().parent.parent / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
 
-from tts import select_backend
+from tts import generate_with_fallback
+from tts._debug import enable as enable_debug, log
 from tts._playback import PlaybackLock, play_audio
-from tts._session_state import SessionState
+from tts._session_state import SessionState, cleanup_stale_sessions
 from voice_common import get_voice_config
 
 
@@ -39,6 +42,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--session", default="", help="Session ID for stop hook")
     parser.add_argument("--speed", type=float, default=0.0,
                         help="Speech speed 0.5-2.0 (kokoro only, 0=use config)")
+    parser.add_argument("--volume", type=float, default=0.0,
+                        help="Playback volume 0.0-2.0 (0=use config)")
+    parser.add_argument("--debug", action="store_true",
+                        help="Enable debug logging to stderr")
     parser.add_argument("text", nargs="+", help="Text to speak")
     return parser.parse_args()
 
@@ -55,8 +62,17 @@ def main() -> int:
     if not config.enabled:
         return 0
 
+    if args.debug or config.debug:
+        enable_debug()
+
     voice = args.voice or config.voice
     speed = args.speed if args.speed > 0 else config.speed
+    volume = args.volume if args.volume > 0 else config.volume
+
+    log(f"Config: voice={voice}, speed={speed}, volume={volume}, "
+        f"backend={config.backend}, fallback={config.fallback}")
+
+    cleanup_stale_sessions()
 
     session = SessionState(args.session)
     lock = PlaybackLock()
@@ -75,22 +91,28 @@ def main() -> int:
         return 1
 
     try:
-        backend = select_backend(config.backend, config.fallback)
+        result = generate_with_fallback(
+            text, voice, speed, config.backend, config.fallback,
+        )
 
-        if backend is None:
-            print("Error: No TTS service available", file=sys.stderr)
+        if result is None:
+            print(
+                "Error: No TTS service available. "
+                "Check Docker ('docker ps') or try 'TTS_BACKEND=pocket-tts'.",
+                file=sys.stderr,
+            )
             session.mark_failed()
             return 1
 
-        print(f"TTS backend: {backend.name}", file=sys.stderr)
+        audio, backend_name = result
+        print(f"TTS backend: {backend_name}", file=sys.stderr)
 
-        audio = backend.generate(text, voice, speed)
         if not audio:
             print("Error: Generated audio is empty", file=sys.stderr)
             session.mark_failed()
             return 1
 
-        play_audio(audio)
+        play_audio(audio, volume)
         session.mark_done()
         return 0
 

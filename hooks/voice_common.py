@@ -25,6 +25,7 @@ backend = "auto"         # auto | kokoro | fish-speech | pocket-tts | chatterbox
 
 [tuning]
 speed = 1.0              # 0.5-2.0 (kokoro only)
+volume = 1.0             # 0.0-2.0 playback volume
 max_sentences = 2        # max sentences in spoken summary (1-10)
 fallback = true          # try other backends when forced one is down
 
@@ -66,9 +67,11 @@ class VoiceConfig:
     voice: str = "af_heart"
     backend: str = "auto"
     speed: float = 1.0
+    volume: float = 1.0
     max_sentences: int = 2
     fallback: bool = True
     prompt: str = ""
+    debug: bool = False
     just_disabled: bool = False
 
 
@@ -130,6 +133,9 @@ def _build_toml(config: VoiceConfig) -> str:
         f"speed = {config.speed}"
         + ("              # 0.5-2.0 (kokoro only)"
            if config.speed == 1.0 else ""),
+        f"volume = {config.volume}"
+        + ("             # 0.0-2.0 playback volume"
+           if config.volume == 1.0 else ""),
         f"max_sentences = {config.max_sentences}"
         + ("        # max sentences in spoken summary (1-10)"
            if config.max_sentences == 2 else ""),
@@ -141,8 +147,13 @@ def _build_toml(config: VoiceConfig) -> str:
         'prompt = "{}"'.format(config.prompt.replace("\\", "\\\\").replace('"', '\\"')),
     ]
 
+    internal_lines: list[str] = []
     if config.just_disabled:
-        lines += ["", "[internal]", "just_disabled = true"]
+        internal_lines.append("just_disabled = true")
+    if config.debug:
+        internal_lines.append("debug = true")
+    if internal_lines:
+        lines += ["", "[internal]", *internal_lines]
 
     lines += [""] + _voice_comment_lines() + [""]
 
@@ -207,6 +218,8 @@ def get_voice_config() -> VoiceConfig:
 
     if "speed" in tuning:
         config.speed = _clamp(float(tuning["speed"]), 0.5, 2.0)
+    if "volume" in tuning:
+        config.volume = _clamp(float(tuning["volume"]), 0.0, 2.0)
     if "max_sentences" in tuning:
         config.max_sentences = int(_clamp(float(tuning["max_sentences"]), 1, 10))
     if "fallback" in tuning:
@@ -217,6 +230,8 @@ def get_voice_config() -> VoiceConfig:
 
     if "just_disabled" in internal:
         config.just_disabled = bool(internal["just_disabled"])
+    if "debug" in internal:
+        config.debug = bool(internal["debug"])
 
     # Always rewrite to keep config in sync with current schema
     _write_toml(config)
@@ -232,6 +247,7 @@ def update_voice_config(**kwargs: object) -> VoiceConfig:
             setattr(config, key, val)
     # Validate after update
     config.speed = _clamp(config.speed, 0.5, 2.0)
+    config.volume = _clamp(config.volume, 0.0, 2.0)
     config.max_sentences = int(_clamp(float(config.max_sentences), 1, 10))
     if config.backend not in VALID_BACKENDS:
         config.backend = "auto"

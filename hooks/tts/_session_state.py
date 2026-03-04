@@ -3,7 +3,23 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
+
+STALE_AGE_SECS = 3600  # 1 hour
+
+
+def cleanup_stale_sessions() -> None:
+    """Remove /tmp/voice-*-{running,done,failed} files older than 1 hour."""
+    now = time.time()
+    tmp = Path("/tmp")
+    for pattern in ("voice-*-running", "voice-*-done", "voice-*-failed"):
+        for path in tmp.glob(pattern):
+            try:
+                if now - path.stat().st_mtime > STALE_AGE_SECS:
+                    path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 class SessionState:

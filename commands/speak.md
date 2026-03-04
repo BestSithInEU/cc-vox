@@ -56,14 +56,17 @@ prompt = "be upbeat and encouraging"
   "Voice feedback enabled. Use `/speak stop` to disable, or `/speak <name>` to change voice."
 - When voice name given: Set `voice = "<name>"` and `enabled = true`, tell user:
   "Voice set to <name> and enabled. Use `/speak stop` to disable."
-- When `stop`: Set `enabled = false` AND set `just_disabled = true` in `[internal]` section (voice unchanged), tell user:
-  "Voice feedback disabled. Use `/speak` to re-enable."
+- When `stop`:
+  1. Set `enabled = false` AND set `just_disabled = true` in `[internal]` section (voice unchanged)
+  2. Run `"${CLAUDE_PLUGIN_ROOT}/scripts/stop-backends"` via Bash to stop any running TTS services
+  3. Tell user: "Voice feedback disabled and TTS backends stopped. Use `/speak` to re-enable."
 - When `prompt <text>`: Set `prompt = "<text>"` in `[style]`, tell user:
   "Custom prompt set: <text>"
 - When `prompt` (no text): Set `prompt = ""` in `[style]`, tell user:
   "Custom prompt cleared."
-- When `backend <name>`: Set `backend = "<name>"` in `[core]`, tell user:
-  "TTS backend set to <name>."
+- When `backend <name>`: Validate that `<name>` is one of: auto, kokoro, fish-speech, pocket-tts, chatterbox, qwen3-tts.
+  If invalid, tell user: "Unknown backend '<name>'. Valid options: auto, kokoro, fish-speech, pocket-tts, chatterbox, qwen3-tts"
+  If valid, set `backend = "<name>"` in `[core]`, tell user: "TTS backend set to <name>."
 - When `speed <value>`: Set `speed = <value>` in `[tuning]` (clamped 0.5-2.0), tell user:
   "Speech speed set to <value>."
 - When `max_sentences <value>`: Set `max_sentences = <value>` in `[tuning]` (clamped 1-10), tell user:

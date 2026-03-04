@@ -37,6 +37,8 @@ def speak_summary(
     summary: str,
     voice: str,
     speed: float = 1.0,
+    volume: float = 1.0,
+    debug: bool = False,
 ) -> None:
     """Call the say script to speak the summary (runs in background)."""
     say_script = PLUGIN_ROOT / "scripts" / "say"
@@ -48,13 +50,17 @@ def speak_summary(
     ]
     if speed != 1.0:
         cmd += ["--speed", str(speed)]
+    if volume != 1.0:
+        cmd += ["--volume", str(volume)]
+    if debug:
+        cmd.append("--debug")
     cmd.append(summary)
 
     try:
         subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=subprocess.PIPE if debug else subprocess.DEVNULL,
         )
     except OSError:
         pass
@@ -120,7 +126,10 @@ def main():
         print(json.dumps({"decision": "approve"}))
         return
 
-    speak_summary(session_id, summary, config.voice, config.speed)
+    speak_summary(
+        session_id, summary, config.voice, config.speed,
+        config.volume, config.debug,
+    )
 
     if used_headless:
         print(json.dumps({
