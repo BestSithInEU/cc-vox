@@ -4,21 +4,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-cc-vox ("Claude Code Voice") is a Claude Code plugin that speaks a short summary aloud after every Claude response. It uses three hooks to inject prompt reminders and trigger TTS playback, with three swappable TTS backends.
+cc-vox is a Claude Code plugin marketplace shipping two plugins:
 
-**Python 3.11+, stdlib only, no pip install.** This is a Claude Code plugin, not a Python package.
+1. **voice** — Speaks a short summary aloud after every Claude response using swappable TTS backends.
+2. **statusline** — Catppuccin-themed statusline showing costs, context window, usage windows, git info, and MCP servers.
+
+**Python 3.11+, stdlib only, no pip install.** This is a Claude Code plugin marketplace, not a Python package.
+
+## Repository Layout
+
+```
+cc-vox/
+├── .claude-plugin/
+│   └── marketplace.json        # lists both plugins
+├── plugins/
+│   ├── voice/                  # TTS voice feedback plugin
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   ├── hooks/              # 3 Claude Code hooks + TTS system
+│   │   ├── scripts/            # say, stop-backends
+│   │   └── commands/           # /speak slash command
+│   └── statusline/             # statusline plugin
+│       ├── .claude-plugin/
+│       │   └── plugin.json
+│       ├── statusline.py       # entry point
+│       ├── statusline_pkg/     # rendering pipeline
+│       ├── scripts/            # setup-statusline
+│       └── commands/           # /setup-statusline slash command
+├── tests/                      # pytest suite (voice plugin)
+├── docs/                       # documentation site
+└── assets/                     # SVG diagrams and logos
+```
 
 ## Development Commands
 
 ```bash
-# Run Claude Code with this plugin loaded locally
+# Run Claude Code with the full marketplace loaded
 claude --plugin-dir .
 
+# Run a single plugin
+claude --plugin-dir ./plugins/voice
+claude --plugin-dir ./plugins/statusline
+
 # Test the TTS pipeline directly
-./scripts/say --voice af_heart "Hello world"
+uv run python plugins/voice/scripts/say.py --voice af_heart "Hello world"
 
 # Force a specific backend
-TTS_BACKEND=kokoro ./scripts/say "Testing Kokoro"
+TTS_BACKEND=kokoro uv run python plugins/voice/scripts/say.py "Testing Kokoro"
+
+# Setup statusline
+bash plugins/statusline/scripts/setup-statusline
+
+# Run tests
+uv run --with pytest pytest -v
 
 # Preview docs locally
 zensical serve
@@ -27,17 +65,17 @@ zensical serve
 zensical build --strict
 ```
 
-There is no test suite, linter, or CI beyond docs deployment.
-
 ## Architecture
 
-### Hook Pipeline (3 hooks, registered in `hooks/hooks.json`)
+### Voice Plugin (`plugins/voice/`)
+
+#### Hook Pipeline (3 hooks, registered in `plugins/voice/hooks/hooks.json`)
 
 1. **UserPromptSubmit** (`hooks/user_prompt_submit_hook.py`) — Injects a system message telling Claude to end responses with a `📢 [spoken summary]` marker.
 2. **PostToolUse** (`hooks/post_tool_use_hook.py`) — Re-injects a brief reminder during long tool-call chains to keep the instruction in context.
 3. **Stop** (`hooks/stop_hook.py`) — Extracts speakable text via a 4-strategy cascade (📢 marker → short response → headless Claude summary → truncation), then launches `scripts/say` as a background subprocess.
 
-### TTS System (`hooks/tts/`)
+#### TTS System (`plugins/voice/hooks/tts/`)
 
 - `_protocol.py` — `TTSBackend` Protocol: `name`, `priority`, `is_available()`, `ensure_running()`, `generate(text, voice, speed) -> bytes`
 - `__init__.py` — Registry + `select_backend()`. Auto-selection tries backends by priority (lower = first).
@@ -46,14 +84,24 @@ There is no test suite, linter, or CI beyond docs deployment.
 - `_playback.py` — Audio playback (ffplay > afplay > aplay > paplay). Uses `fcntl.flock` on `/tmp/voice-playback.lock`.
 - `_session_state.py` — Sentinel files at `/tmp/voice-{session_id}-{running,done,failed}`.
 
-### Configuration
+#### Configuration
 
-TOML config at `~/.claude/cc-vox.toml` with sections: `[core]`, `[tuning]`, `[style]`, `[internal]`. Read/written by `hooks/voice_common.py` which holds the `VoiceConfig` dataclass.
+TOML config at `~/.claude/cc-vox.toml` with sections: `[core]`, `[tuning]`, `[style]`, `[internal]`. Read/written by `plugins/voice/hooks/voice_common.py` which holds the `VoiceConfig` dataclass.
 
-### Adding a TTS Backend
+#### Adding a TTS Backend
 
-1. Create `hooks/tts/my_backend.py` implementing `TTSBackend`
-2. Add one import + entry to `_registry()` in `hooks/tts/__init__.py`
+1. Create `plugins/voice/hooks/tts/my_backend.py` implementing `TTSBackend`
+2. Add one import + entry to `_registry()` in `plugins/voice/hooks/tts/__init__.py`
+
+### Statusline Plugin (`plugins/statusline/`)
+
+Python-based statusline rendering pipeline:
+- `statusline.py` — Entry point, run via `uv run python statusline.py`
+- `statusline_pkg/__main__.py` — Orchestrator: parse stdin → OAuth → windows → costs → git → MCP → render
+- `statusline_pkg/renderer.py` — 5-line output (identity, costs, context, windows, MCP)
+- `statusline_pkg/theme.py` — Catppuccin color palette with dynamic accent colors
+
+Setup: `bash plugins/statusline/scripts/setup-statusline` writes the `statusLine` setting to `~/.claude/settings.json`.
 
 ## Conventions
 

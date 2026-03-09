@@ -4,6 +4,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/BestSithInEU/cc-vox/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/BestSithInEU/cc-vox/tests.yml?branch=main&style=flat-square&label=tests" alt="Tests"></a>
   <a href="#-quick-start"><img src="https://img.shields.io/badge/setup-2_min-brightgreen?style=flat-square" alt="Setup time"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/version-2.0.0-orange?style=flat-square" alt="Version">
