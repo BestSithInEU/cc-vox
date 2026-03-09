@@ -8,9 +8,21 @@ and voice reminder generation.
 
 from __future__ import annotations
 
+import os
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+
+from constants import (
+    SENTENCES_MIN,
+    SENTENCES_MAX,
+    SPEED_MIN,
+    SPEED_MAX,
+    VOICE_MARKER,
+    VOLUME_MIN,
+    VOLUME_MAX,
+    sentence_label,
+)
 
 DEFAULT_CONFIG_PATH = Path.home() / ".claude" / "cc-vox.toml"
 OLD_CONFIG_PATH = Path.home() / ".claude" / "voice.local.md"
@@ -71,6 +83,10 @@ class VoiceConfig:
     max_sentences: int = 2
     fallback: bool = True
     prompt: str = ""
+    clone_audio: str = ""
+    save_history: bool = False
+    conversational: bool = False
+    update_interval: int = 30
     debug: bool = False
     just_disabled: bool = False
 
@@ -79,12 +95,52 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
+def _validate_config(config: VoiceConfig) -> tuple[VoiceConfig, list[str]]:
+    """Clamp and validate all config fields.
+
+    Returns (config, warnings) where warnings lists any clamped fields.
+    """
+    warnings: list[str] = []
+
+    clamped = _clamp(config.speed, SPEED_MIN, SPEED_MAX)
+    if clamped != config.speed:
+        warnings.append(
+            f"speed clamped from {config.speed} to {clamped} "
+            f"(range: {SPEED_MIN}\u2013{SPEED_MAX})"
+        )
+    config.speed = clamped
+
+    clamped_vol = _clamp(config.volume, VOLUME_MIN, VOLUME_MAX)
+    if clamped_vol != config.volume:
+        warnings.append(
+            f"volume clamped from {config.volume} to {clamped_vol} "
+            f"(range: {VOLUME_MIN}\u2013{VOLUME_MAX})"
+        )
+    config.volume = clamped_vol
+
+    clamped_sent = int(_clamp(float(config.max_sentences), SENTENCES_MIN, SENTENCES_MAX))
+    if clamped_sent != config.max_sentences:
+        warnings.append(
+            f"max_sentences clamped from {config.max_sentences} to {clamped_sent} "
+            f"(range: {SENTENCES_MIN}\u2013{SENTENCES_MAX})"
+        )
+    config.max_sentences = clamped_sent
+
+    if config.backend not in VALID_BACKENDS:
+        warnings.append(
+            f"unknown backend {config.backend!r} reset to 'auto'"
+        )
+        config.backend = "auto"
+
+    return config, warnings
+
+
 def _migrate_old_config() -> dict[str, object] | None:
     """Read values from old voice.local.md if it exists. Returns dict or None."""
     if not OLD_CONFIG_PATH.exists():
         return None
 
-    content = OLD_CONFIG_PATH.read_text()
+    content = OLD_CONFIG_PATH.read_text(encoding="utf-8")
     values: dict[str, object] = {}
 
     lines = content.split("\n")
@@ -147,6 +203,24 @@ def _build_toml(config: VoiceConfig) -> str:
         'prompt = "{}"'.format(config.prompt.replace("\\", "\\\\").replace('"', '\\"')),
     ]
 
+    if config.clone_audio:
+        lines.append(
+            'clone_audio = "{}"'.format(
+                config.clone_audio.replace("\\", "\\\\").replace('"', '\\"')
+            )
+        )
+
+    # Features section (non-default values only)
+    feature_lines: list[str] = []
+    if config.save_history:
+        feature_lines.append("save_history = true")
+    if config.conversational:
+        feature_lines.append("conversational = true")
+    if config.update_interval != 30:
+        feature_lines.append(f"update_interval = {config.update_interval}")
+    if feature_lines:
+        lines += ["", "[features]", *feature_lines]
+
     internal_lines: list[str] = []
     if config.just_disabled:
         internal_lines.append("just_disabled = true")
@@ -161,14 +235,16 @@ def _build_toml(config: VoiceConfig) -> str:
 
 
 def _write_toml(config: VoiceConfig) -> None:
-    """Write config to cc-vox.toml if content changed."""
+    """Write config to cc-vox.toml atomically if content changed."""
     content = _build_toml(config)
     try:
-        if DEFAULT_CONFIG_PATH.read_text() == content:
+        if DEFAULT_CONFIG_PATH.read_text(encoding="utf-8") == content:
             return
     except OSError:
         pass
-    DEFAULT_CONFIG_PATH.write_text(content)
+    tmp = DEFAULT_CONFIG_PATH.with_suffix(".toml.tmp")
+    tmp.write_text(content, encoding="utf-8")
+    os.replace(str(tmp), str(DEFAULT_CONFIG_PATH))
 
 
 def get_voice_config() -> VoiceConfig:
@@ -192,14 +268,16 @@ def get_voice_config() -> VoiceConfig:
             return config
         else:
             # First run: create default
-            DEFAULT_CONFIG_PATH.write_text(_default_config_toml())
+            DEFAULT_CONFIG_PATH.write_text(_default_config_toml(), encoding="utf-8")
             return config
 
     # Parse TOML
     try:
         raw = DEFAULT_CONFIG_PATH.read_bytes()
         data = tomllib.loads(raw.decode())
-    except (OSError, tomllib.TOMLDecodeError):
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        from tts._debug import log
+        log(f"config parse: {type(exc).__name__}: {exc}")
         return config
 
     core = data.get("core", {})
@@ -212,26 +290,36 @@ def get_voice_config() -> VoiceConfig:
     if "voice" in core:
         config.voice = str(core["voice"])
     if "backend" in core:
-        val = str(core["backend"])
-        if val in VALID_BACKENDS:
-            config.backend = val
+        config.backend = str(core["backend"])
 
     if "speed" in tuning:
-        config.speed = _clamp(float(tuning["speed"]), 0.5, 2.0)
+        config.speed = float(tuning["speed"])
     if "volume" in tuning:
-        config.volume = _clamp(float(tuning["volume"]), 0.0, 2.0)
+        config.volume = float(tuning["volume"])
     if "max_sentences" in tuning:
-        config.max_sentences = int(_clamp(float(tuning["max_sentences"]), 1, 10))
+        config.max_sentences = int(tuning["max_sentences"])
     if "fallback" in tuning:
         config.fallback = bool(tuning["fallback"])
 
     if "prompt" in style:
         config.prompt = str(style["prompt"])
+    if "clone_audio" in style:
+        config.clone_audio = str(style["clone_audio"])
+
+    features = data.get("features", {})
+    if "save_history" in features:
+        config.save_history = bool(features["save_history"])
+    if "conversational" in features:
+        config.conversational = bool(features["conversational"])
+    if "update_interval" in features:
+        config.update_interval = int(features["update_interval"])
 
     if "just_disabled" in internal:
         config.just_disabled = bool(internal["just_disabled"])
     if "debug" in internal:
         config.debug = bool(internal["debug"])
+
+    _validate_config(config)  # discard warnings for file reads
 
     # Always rewrite to keep config in sync with current schema
     _write_toml(config)
@@ -239,20 +327,28 @@ def get_voice_config() -> VoiceConfig:
     return config
 
 
-def update_voice_config(**kwargs: object) -> VoiceConfig:
-    """Read current config, apply updates, write back. Returns updated config."""
+def update_voice_config(**kwargs: object) -> tuple[VoiceConfig, list[str]]:
+    """Read current config, apply updates, write back.
+
+    Returns (config, warnings) where warnings lists any clamped fields.
+    """
     config = get_voice_config()
+    old_backend = config.backend
     for key, val in kwargs.items():
         if hasattr(config, key):
             setattr(config, key, val)
-    # Validate after update
-    config.speed = _clamp(config.speed, 0.5, 2.0)
-    config.volume = _clamp(config.volume, 0.0, 2.0)
-    config.max_sentences = int(_clamp(float(config.max_sentences), 1, 10))
-    if config.backend not in VALID_BACKENDS:
-        config.backend = "auto"
+    config, warnings = _validate_config(config)
     _write_toml(config)
-    return config
+
+    # Invalidate backend cache when backend preference changes
+    if config.backend != old_backend:
+        try:
+            from tts._cache import invalidate_cache
+            invalidate_cache()
+        except ImportError:
+            pass
+
+    return config, warnings
 
 
 def clear_just_disabled_flag() -> None:
@@ -275,17 +371,17 @@ def clear_just_disabled_flag() -> None:
 
 def build_full_reminder(max_sentences: int = 2, custom_prompt: str = "") -> str:
     """Build the full voice reminder for UserPromptSubmit hook."""
-    sentence_label = "1 sentence" if max_sentences == 1 else f"{max_sentences} sentences"
+    label = sentence_label(max_sentences)
     reminder = (
-        "Voice feedback is enabled. At the end of your response:\n"
-        f"- If ≤{sentence_label} of natural speakable text, no summary needed\n"
-        f"- If ≤{sentence_label} but contains code/paths/technical output, "
-        "ADD a 📢 summary\n"
-        f"- If longer, end with: 📢 [brief spoken summary, max {sentence_label}]\n\n"
-        "VOICE SUMMARY STYLE:\n"
+        "Voice feedback is enabled. Your response will be spoken aloud.\n"
+        f"- Do NOT add a visible {VOICE_MARKER} marker or spoken summary to your output\n"
+        "- Just write your response naturally — the voice system will handle "
+        "extraction and speak it automatically\n"
+        f"- Keep responses conversational and speakable when possible ({label} is ideal)\n\n"
+        "VOICE STYLE:\n"
         "- Match the user's tone - if they're casual or use colorful language, "
         "mirror that\n"
-        "- Keep it brief and conversational, like you're speaking to them\n"
+        "- Keep it conversational, like you're speaking to them\n"
         "- NEVER include file paths, UUIDs, hashes, or technical identifiers - "
         "use natural language instead (e.g., 'the config file' not "
         "'/Users/foo/bar/config.json')"
@@ -302,8 +398,8 @@ def build_full_reminder(max_sentences: int = 2, custom_prompt: str = "") -> str:
 
 def build_short_reminder(max_sentences: int = 2) -> str:
     """Build a brief voice reminder for PostToolUse hook."""
-    sentence_label = "1 sentence" if max_sentences == 1 else f"{max_sentences} sentences"
+    label = sentence_label(max_sentences)
     return (
-        f"[Voice feedback: when done, end with 📢 summary (max {sentence_label}) "
-        f"if response is >{sentence_label} or contains code/paths]"
+        f"[Voice feedback: keep final response conversational and speakable, "
+        f"around {label}. Do NOT add {VOICE_MARKER} markers.]"
     )

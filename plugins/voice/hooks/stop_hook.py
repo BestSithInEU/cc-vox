@@ -3,141 +3,102 @@
 Stop hook - extract or generate voice summary.
 
 Flow:
-1. Look for 📢 marker in the last assistant message (instant, no API call)
+1. Look for voice marker in the last assistant message (instant, no API call)
 2. If not found and response is short, speak it directly
 3. Fall back to headless Claude to generate a summary (slower)
 4. Last resort: truncate last message
 5. Speak the summary via the say script
 """
 
-import json
-import subprocess
 import sys
 from pathlib import Path
 
 # Add hooks directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from session import (
-    extract_voice_marker,
-    find_session_file,
-    get_last_assistant_message,
-    get_recent_conversation,
-    is_short_response_sentences,
-    trim_to_sentences,
-)
-from summarize import summarize_with_claude
-from voice_common import get_voice_config
+# Temporary file-based debug logging (stderr not visible in Claude debug)
+_DEBUG_LOG = Path("/tmp/cc-vox-stop-hook.log")
 
-PLUGIN_ROOT = Path(__file__).parent.parent
+def _flog(msg: str) -> None:
+    with open(_DEBUG_LOG, "a") as f:
+        f.write(f"{msg}\n")
+
+from extraction import extract_speakable_text
+from hook_framework import APPROVE, HookResult, run_hook
+from session import find_session_file, get_last_assistant_message
+from speaker import speak
+from tts import select_backend
+from tts._state_file import write_tts_state
+from voice_common import VoiceConfig
 
 
-def speak_summary(
-    session_id: str,
-    summary: str,
-    voice: str,
-    speed: float = 1.0,
-    volume: float = 1.0,
-    debug: bool = False,
-) -> None:
-    """Call the say script to speak the summary (runs in background)."""
-    say_script = PLUGIN_ROOT / "scripts" / "say"
+def handle(data: dict, config: VoiceConfig) -> HookResult:
+    session_id = data.get("session_id", "")
+    _flog(f"stop: session_id={session_id!r}, config.enabled={config.enabled}, config.debug={config.debug}")
+    _flog(f"stop: stdin keys={list(data.keys())}")
 
-    cmd = [
-        str(say_script),
-        "--session", session_id,
-        "--voice", voice,
-    ]
-    if speed != 1.0:
-        cmd += ["--speed", str(speed)]
-    if volume != 1.0:
-        cmd += ["--volume", str(volume)]
-    if debug:
-        cmd.append("--debug")
-    cmd.append(summary)
+    if not session_id:
+        _flog("stop: no session_id, skipping")
+        return APPROVE
 
-    try:
-        subprocess.Popen(
-            cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE if debug else subprocess.DEVNULL,
+    # Prefer last_assistant_message from stdin (no file I/O, no race condition)
+    last_msg = data.get("last_assistant_message", "")
+    _flog(f"stop: stdin last_assistant_message={bool(last_msg)} ({len(last_msg)} chars)")
+
+    session_file = find_session_file(session_id) if not last_msg else None
+
+    if not last_msg and session_file:
+        last_msg = get_last_assistant_message(session_file)
+        _flog(f"stop: session file fallback={'found' if last_msg else 'empty'}")
+
+    if not last_msg:
+        _flog("stop: no message to speak, skipping")
+        return APPROVE
+
+    _flog(f"stop: last_msg preview: {last_msg[:120]!r}")
+
+    # session_file still needed for headless summarization fallback
+    if session_file is None:
+        session_file = find_session_file(session_id)
+
+    result = extract_speakable_text(last_msg, config, session_file or Path("/dev/null"))
+    if not result:
+        _flog("stop: extraction returned None, skipping")
+        return APPROVE
+
+    _flog(f"stop: extracted '{result.text[:80]}' (headless={result.used_headless})")
+
+    # Pre-check backend availability (speak is fire-and-forget via Popen)
+    backend = select_backend(config.backend, config.fallback)
+    if backend is None:
+        _flog("stop: no backend available")
+        write_tts_state("none", config.voice, status="down")
+        return HookResult(
+            system_message=(
+                "Voice feedback unavailable \u2014 no TTS backend is reachable. "
+                "Run /voice:speak status for details."
+            ),
         )
-    except OSError:
-        pass
+
+    _flog(f"stop: speaking via {backend.name}")
+    speak(
+        session_id, result.text, config.voice,
+        config.speed, config.volume, config.debug,
+    )
+
+    if result.used_headless:
+        return HookResult(system_message=f"\U0001f50a {result.text}")
+    return APPROVE
 
 
 def main():
     try:
-        data = json.load(sys.stdin)
-    except json.JSONDecodeError:
-        print(json.dumps({"decision": "approve"}))
-        return
-
-    session_id = data.get("session_id", "")
-
-    config = get_voice_config()
-    if not config.enabled:
-        print(json.dumps({"decision": "approve"}))
-        return
-
-    if not session_id:
-        print(json.dumps({"decision": "approve"}))
-        return
-
-    session_file = find_session_file(session_id)
-    if not session_file:
-        print(json.dumps({"decision": "approve"}))
-        return
-
-    summary = None
-    used_headless = False
-
-    last_assistant_msg = get_last_assistant_message(session_file)
-
-    flexible_limit = config.max_sentences + 1
-
-    # Strategy 1: Try to extract 📢 marker (instant!)
-    if last_assistant_msg:
-        marker_summary = extract_voice_marker(last_assistant_msg)
-        if marker_summary:
-            summary = trim_to_sentences(marker_summary, flexible_limit)
-
-    # Strategy 2: If no marker but response is short, speak directly
-    if not summary and last_assistant_msg:
-        if is_short_response_sentences(last_assistant_msg, config.max_sentences):
-            summary = last_assistant_msg
-
-    # Strategy 3: Fall back to headless Claude summarization (slower)
-    if not summary and last_assistant_msg:
-        conversation = get_recent_conversation(session_file)
-        if conversation:
-            summary = summarize_with_claude(
-                conversation, config.prompt, config.max_sentences,
-            )
-            if summary:
-                summary = trim_to_sentences(summary, flexible_limit)
-                used_headless = True
-
-    # Strategy 4: Last resort - truncate last message
-    if not summary and last_assistant_msg:
-        summary = trim_to_sentences(last_assistant_msg, config.max_sentences)
-
-    if not summary:
-        print(json.dumps({"decision": "approve"}))
-        return
-
-    speak_summary(
-        session_id, summary, config.voice, config.speed,
-        config.volume, config.debug,
-    )
-
-    if used_headless:
-        print(json.dumps({
-            "decision": "approve",
-            "systemMessage": f"🔊 {summary}"
-        }))
-    else:
-        print(json.dumps({"decision": "approve"}))
+        run_hook(handle)
+    except Exception as exc:
+        _flog(f"stop: CRASH: {exc}")
+        import traceback
+        _flog(traceback.format_exc())
+        print('{"decision":"approve"}')
 
 
 if __name__ == "__main__":
