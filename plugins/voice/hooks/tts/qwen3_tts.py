@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import urllib.parse
 import urllib.request
 
+from constants import env_port
 from ._base import DockerBackend
 
-QWEN3_TTS_PORT = int(os.environ.get("QWEN3_TTS_PORT", "32614"))
+QWEN3_TTS_PORT = env_port("QWEN3_TTS_PORT", 32614)
 
 
 class Qwen3TTSBackend(DockerBackend):

@@ -7,25 +7,46 @@ import re
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 
+from constants import env_port
 from ._base import TTSBackend
 from .voices import to_alias
 
-TTS_PORT = int(os.environ.get("TTS_PORT", "8000"))
+TTS_PORT = env_port("TTS_PORT", 8000)
 
 
 def _find_pid_by_port(port: int) -> int | None:
     """Find the PID of the process listening on *port*, or None."""
     try:
-        result = subprocess.run(
-            ["ss", "-tlnp", "sport", "=", f":{port}"],
-            capture_output=True, text=True, timeout=5,
-        )
-        match = re.search(r"pid=(\d+)", result.stdout)
-        return int(match.group(1)) if match else None
-    except (OSError, subprocess.TimeoutExpired):
+        if sys.platform == "win32":
+            result = subprocess.run(
+                ["netstat", "-ano"],
+                capture_output=True, text=True, timeout=5,
+            )
+            for line in result.stdout.splitlines():
+                if f":{port}" in line and "LISTENING" in line:
+                    match = re.search(r"(\d+)\s*$", line.strip())
+                    if match:
+                        return int(match.group(1))
+            return None
+        elif sys.platform == "darwin":
+            result = subprocess.run(
+                ["lsof", "-i", f":{port}", "-t"],
+                capture_output=True, text=True, timeout=5,
+            )
+            pid_str = result.stdout.strip().split("\n")[0].strip()
+            return int(pid_str) if pid_str else None
+        else:
+            result = subprocess.run(
+                ["ss", "-tlnp", "sport", "=", f":{port}"],
+                capture_output=True, text=True, timeout=5,
+            )
+            match = re.search(r"pid=(\d+)", result.stdout)
+            return int(match.group(1)) if match else None
+    except (OSError, ValueError, subprocess.TimeoutExpired):
         return None
 
 
@@ -54,7 +75,8 @@ class PocketTTSBackend(TTSBackend):
 
         print("Starting pocket-tts server...", file=sys.stderr)
         try:
-            with open("/tmp/pocket-tts-server.log", "w") as log_fd:
+            log_path = os.path.join(tempfile.gettempdir(), "pocket-tts-server.log")
+            with open(log_path, "w") as log_fd:
                 subprocess.Popen(
                     ["uvx", "pocket-tts", "serve", "--host", "localhost",
                      "--port", str(TTS_PORT)],

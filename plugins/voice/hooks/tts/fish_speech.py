@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import urllib.request
 
+from constants import env_port
 from ._base import DockerBackend
 from ._errors import TTSGenerationError
 
-FISH_SPEECH_PORT = int(os.environ.get("FISH_SPEECH_PORT", "32611"))
-GPU_THRESHOLD = int(os.environ.get("GPU_THRESHOLD", "80"))
+FISH_SPEECH_PORT = env_port("FISH_SPEECH_PORT", 32611)
+GPU_THRESHOLD = env_port("GPU_THRESHOLD", 80)
 
 
 def _get_gpu_util() -> int:

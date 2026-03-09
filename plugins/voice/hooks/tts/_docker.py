@@ -33,5 +33,6 @@ def docker_stop_by_port(port: int) -> None:
                 ["docker", "stop", cid],
                 capture_output=True, timeout=30,
             )
-    except (OSError, subprocess.TimeoutExpired):
-        pass
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        from ._debug import log
+        log(f"docker stop port {port}: {type(exc).__name__}: {exc}")

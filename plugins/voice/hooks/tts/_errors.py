@@ -13,3 +13,7 @@ class TTSConnectionError(TTSError):
 
 class TTSGenerationError(TTSError):
     """Audio generation failed after reaching the backend."""
+
+
+class TTSBackendUnavailable(TTSError):
+    """No backend could be started or reached."""

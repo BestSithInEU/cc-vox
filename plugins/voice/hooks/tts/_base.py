@@ -5,6 +5,7 @@ from __future__ import annotations
 import abc
 import urllib.error
 import urllib.request
+from collections.abc import Iterator
 
 from ._docker import docker_stop_by_port
 from ._errors import TTSConnectionError, TTSGenerationError
@@ -23,6 +24,7 @@ class TTSBackend(abc.ABC):
 
     health_timeout: float = 2.0
     generate_timeout: float = 60.0
+    supports_streaming: bool = False
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
@@ -64,19 +66,25 @@ class TTSBackend(abc.ABC):
                 return self._generate_impl(text, voice, speed)
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
             raise TTSConnectionError(
-                f"{self.name}: connection failed: {exc}"
+                f"{self.name}: {type(exc).__name__}: {exc}"
             ) from exc
         except TTSGenerationError:
             raise
         except Exception as exc:
             raise TTSGenerationError(
-                f"{self.name}: generation failed: {exc}"
+                f"{self.name}: {type(exc).__name__}: {exc}"
             ) from exc
 
     @abc.abstractmethod
     def _generate_impl(self, text: str, voice: str, speed: float) -> bytes:
         """Backend-specific audio generation — override in subclasses."""
         ...
+
+    def generate_streaming(
+        self, text: str, voice: str, speed: float,
+    ) -> Iterator[bytes]:
+        """Yield audio chunks. Default: single chunk from generate()."""
+        yield self.generate(text, voice, speed)
 
     def stop(self) -> None:
         """Stop the backend service. No-op by default."""

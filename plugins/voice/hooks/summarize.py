@@ -10,6 +10,9 @@ from __future__ import annotations
 import json
 import subprocess
 
+from constants import MAX_CONTEXT_CHARS, MAX_MESSAGE_CHARS, sentence_label
+from tts._debug import log
+
 
 def summarize_with_claude(
     conversation: list[tuple[str, str]],
@@ -41,16 +44,16 @@ def summarize_with_claude(
 
     past_text = "\n\n".join(past_lines) if past_lines else "(no prior context)"
 
-    if len(past_text) > 3000:
-        past_text = past_text[-3000:]
-    if len(last_assistant_msg) > 2000:
-        last_assistant_msg = last_assistant_msg[:2000] + "..."
+    if len(past_text) > MAX_CONTEXT_CHARS:
+        past_text = past_text[-MAX_CONTEXT_CHARS:]
+    if len(last_assistant_msg) > MAX_MESSAGE_CHARS:
+        last_assistant_msg = last_assistant_msg[:MAX_MESSAGE_CHARS] + "..."
 
     base_instruction = (
         "You are the assistant who just wrote that message. Give a brief SPOKEN "
         "voice update to the user. Match the user's tone - if they're casual or "
         "use colorful language, mirror that. IMPORTANT: Keep it to "
-        f"{max_sentences} sentence{'s' if max_sentences != 1 else ''} max, "
+        f"{sentence_label(max_sentences)} max, "
         "and NEVER longer than the original message. Since this will be "
         "spoken aloud, avoid file paths, UUIDs, hashes, or technical identifiers "
         "- use natural language instead (e.g., 'the config file' not "
@@ -102,7 +105,7 @@ YOUR LAST MESSAGE:
                 summary = str(data).strip()
             return summary if summary else None
 
-    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
-        pass
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+        log(f"headless claude: {type(exc).__name__}: {exc}")
 
     return None

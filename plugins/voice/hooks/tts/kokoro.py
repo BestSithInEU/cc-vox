@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import os
-
+from constants import env_port
 from ._openai_compat import OpenAICompatibleBackend
 from .voices import to_kokoro
 
-KOKORO_PORT = int(os.environ.get("KOKORO_PORT", "32612"))
+KOKORO_PORT = env_port("KOKORO_PORT", 32612)
 
 
 class KokoroBackend(OpenAICompatibleBackend):

@@ -12,6 +12,9 @@ import re
 import time
 from pathlib import Path
 
+from constants import MAX_SUMMARY_WORDS, VOICE_MARKER
+from tts._debug import log
+
 
 def find_session_file(session_id: str) -> Path | None:
     """Find session file by ID in ~/.claude/projects/*/"""
@@ -38,16 +41,25 @@ def find_session_file(session_id: str) -> Path | None:
     return None
 
 
+_SENTENCE_SPLIT = re.compile(
+    r'(?<!Dr)(?<!Mr)(?<!Mrs)(?<!Ms)(?<!Jr)(?<!Sr)(?<=[.!?])\s+',
+)
+
+
+def _split_sentences(text: str) -> list[str]:
+    """Split text into sentences, handling common abbreviations."""
+    parts = _SENTENCE_SPLIT.split(text.strip())
+    return [s for s in parts if s]
+
+
 def count_sentences(text: str) -> int:
     """Count sentences in text (split on . ! ?)."""
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    return len([s for s in sentences if s])
+    return len(_split_sentences(text))
 
 
 def trim_to_sentences(text: str, max_sentences: int) -> str:
     """Trim text to max_sentences, adding ellipsis if truncated."""
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    sentences = [s for s in sentences if s]
+    sentences = _split_sentences(text)
     if len(sentences) <= max_sentences:
         return text.strip()
     return " ".join(sentences[:max_sentences])
@@ -60,7 +72,7 @@ def is_short_response_sentences(text: str, max_sentences: int) -> bool:
 
 def extract_voice_marker(text: str) -> str | None:
     """Extract voice summary from 📢 marker if present."""
-    pattern = r'^[ \t]*📢[ \t]*(.+?)[ \t]*$'
+    pattern = rf'^[ \t]*{re.escape(VOICE_MARKER)}[ \t]*(.+?)[ \t]*$'
     match = re.search(pattern, text, re.MULTILINE)
     if match:
         summary = match.group(1).strip()
@@ -122,8 +134,8 @@ def _read_session_messages(session_file: Path) -> tuple[int, int, str | None]:
 
                 except json.JSONDecodeError:
                     continue
-    except OSError:
-        pass
+    except OSError as exc:
+        log(f"read session messages: {exc}")
 
     return last_user_line, last_assistant_text_line, last_assistant_text
 
@@ -156,7 +168,7 @@ def get_last_assistant_message(
 def get_recent_conversation(
     session_file: Path,
     num_turns: int = 5,
-    max_assistant_words: int = 500,
+    max_assistant_words: int = MAX_SUMMARY_WORDS,
 ) -> list[tuple[str, str]]:
     """Extract recent conversation turns from session file.
 
@@ -200,7 +212,7 @@ def get_recent_conversation(
                 except json.JSONDecodeError:
                     continue
 
-    except OSError:
-        pass
+    except OSError as exc:
+        log(f"read conversation: {exc}")
 
     return messages[-(num_turns * 2):]

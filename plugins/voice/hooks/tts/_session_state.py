@@ -3,35 +3,39 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import time
 from pathlib import Path
 
+from ._debug import log
+
 STALE_AGE_SECS = 3600  # 1 hour
+_TMP = Path(tempfile.gettempdir())
 
 
 def cleanup_stale_sessions() -> None:
-    """Remove /tmp/voice-*-{running,done,failed} files older than 1 hour."""
+    """Remove voice-*-{running,done,failed} temp files older than 1 hour."""
     now = time.time()
-    tmp = Path("/tmp")
     for pattern in ("voice-*-running", "voice-*-done", "voice-*-failed"):
-        for path in tmp.glob(pattern):
+        for path in _TMP.glob(pattern):
             try:
                 if now - path.stat().st_mtime > STALE_AGE_SECS:
                     path.unlink(missing_ok=True)
-            except OSError:
-                pass
+            except OSError as exc:
+                log(f"cleanup stale session: {exc}")
 
 
 class SessionState:
-    """Manages /tmp session state files so the stop hook knows TTS status."""
+    """Manages session state temp files so the stop hook knows TTS status."""
 
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.active = bool(session_id)
         if self.active:
-            self.running = f"/tmp/voice-{session_id}-running"
-            self.done = f"/tmp/voice-{session_id}-done"
-            self.failed = f"/tmp/voice-{session_id}-failed"
+            base = str(_TMP)
+            self.running = f"{base}/voice-{session_id}-running"
+            self.done = f"{base}/voice-{session_id}-done"
+            self.failed = f"{base}/voice-{session_id}-failed"
             Path(self.running).write_text(str(os.getpid()))
 
     def mark_done(self) -> None:
