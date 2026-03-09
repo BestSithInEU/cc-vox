@@ -166,7 +166,7 @@ class TestGetVoiceConfig:
             '[style]\n'
             'prompt = "be concise"\n'
         )
-        tmp_config.write_text(toml_content)
+        tmp_config.write_text(toml_content, encoding="utf-8")
         config = get_voice_config()
         assert config.enabled is False
         assert config.voice == "af_bella"
@@ -190,7 +190,7 @@ class TestGetVoiceConfig:
             '[style]\n'
             'prompt = ""\n'
         )
-        tmp_config.write_text(toml_content)
+        tmp_config.write_text(toml_content, encoding="utf-8")
         config = get_voice_config()
         assert config.backend == "auto"
 
@@ -202,29 +202,46 @@ class TestUpdateVoiceConfig:
     def test_applies_changes(self, tmp_config: Path) -> None:
         # Create initial config
         get_voice_config()
-        config = update_voice_config(voice="af_bella", max_sentences=4)
+        config, warnings = update_voice_config(voice="af_bella", max_sentences=4)
         assert config.voice == "af_bella"
         assert config.max_sentences == 4
+        assert warnings == []
 
     def test_clamps_speed_too_high(self, tmp_config: Path) -> None:
         get_voice_config()
-        config = update_voice_config(speed=5.0)
+        config, warnings = update_voice_config(speed=5.0)
         assert config.speed == 2.0
+        assert any("speed clamped" in w for w in warnings)
 
     def test_clamps_speed_too_low(self, tmp_config: Path) -> None:
         get_voice_config()
-        config = update_voice_config(speed=0.1)
+        config, warnings = update_voice_config(speed=0.1)
         assert config.speed == 0.5
+        assert any("speed clamped" in w for w in warnings)
 
     def test_rejects_invalid_backend(self, tmp_config: Path) -> None:
         get_voice_config()
-        config = update_voice_config(backend="fake_backend")
+        config, warnings = update_voice_config(backend="fake_backend")
         assert config.backend == "auto"
+        assert any("unknown backend" in w for w in warnings)
 
     def test_valid_speed_unchanged(self, tmp_config: Path) -> None:
         get_voice_config()
-        config = update_voice_config(speed=1.3)
+        config, warnings = update_voice_config(speed=1.3)
         assert config.speed == 1.3
+        assert warnings == []
+
+    def test_clamps_volume_returns_warning(self, tmp_config: Path) -> None:
+        get_voice_config()
+        config, warnings = update_voice_config(volume=5.0)
+        assert config.volume == 2.0
+        assert any("volume clamped" in w for w in warnings)
+
+    def test_clamps_max_sentences_returns_warning(self, tmp_config: Path) -> None:
+        get_voice_config()
+        config, warnings = update_voice_config(max_sentences=50)
+        assert config.max_sentences == 10
+        assert any("max_sentences clamped" in w for w in warnings)
 
 
 # ── _migrate_old_config ──────────────────────────────────────────────
@@ -249,7 +266,7 @@ class TestMigrateOldConfig:
 
     def test_old_file_deleted_after_migration(self, tmp_path: Path) -> None:
         old_path = tmp_path / "voice.local.md"
-        old_path.write_text("---\nvoice: af_bella\n---\n")
+        old_path.write_text("---\nvoice: af_bella\n---\n", encoding="utf-8")
         config_path = tmp_path / "cc-vox.toml"
         with (
             patch("voice_common.DEFAULT_CONFIG_PATH", config_path),

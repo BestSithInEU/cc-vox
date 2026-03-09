@@ -29,7 +29,8 @@ def tmp_old_config(tmp_path: Path):
         "enabled: true\n"
         'voice: af_bella\n'
         'prompt: "be concise"\n'
-        "---\n"
+        "---\n",
+        encoding="utf-8",
     )
     config_path = tmp_path / "cc-vox.toml"
     with (

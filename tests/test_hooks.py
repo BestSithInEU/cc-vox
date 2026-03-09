@@ -25,9 +25,9 @@ def _run_hook(module_name: str, input_data: dict, config: VoiceConfig) -> dict:
 
     with (
         patch.dict(sys.modules, {}),  # force fresh import each time
-        patch(f"{module_name}.sys.stdin", stdin),
-        patch(f"{module_name}.sys.stdout", stdout),
-        patch(f"{module_name}.get_voice_config", return_value=config),
+        patch("hook_framework.sys.stdin", stdin),
+        patch("hook_framework.sys.stdout", stdout),
+        patch("hook_framework.get_voice_config", return_value=config),
     ):
         mod = __import__(module_name)
         mod.main()
@@ -51,9 +51,9 @@ class TestUserPromptSubmitHook:
             stdin = io.StringIO(json.dumps({"prompt": "hello"}))
             stdout = io.StringIO()
             with (
-                patch("user_prompt_submit_hook.sys.stdin", stdin),
-                patch("user_prompt_submit_hook.sys.stdout", stdout),
-                patch("user_prompt_submit_hook.get_voice_config", return_value=config),
+                patch("hook_framework.sys.stdin", stdin),
+                patch("hook_framework.sys.stdout", stdout),
+                patch("hook_framework.get_voice_config", return_value=config),
             ):
                 import user_prompt_submit_hook
                 user_prompt_submit_hook.main()
@@ -125,13 +125,13 @@ class TestStopHookDisabled:
 
 
 class TestStopHookStrategy1Marker:
-    """Strategy 1: 📢 marker found in last assistant message.
+    """Strategy 1: marker found in last assistant message.
 
     Uses real extract_voice_marker and trim_to_sentences (no mocking)
     so the actual parsing logic is exercised.
     """
 
-    def test_marker_found_calls_speak_summary(self) -> None:
+    def test_marker_found_calls_speak(self) -> None:
         config = VoiceConfig(enabled=True, voice="af_heart", speed=1.0, max_sentences=2)
         marker_text = "Here is code.\n\n\U0001f4e2 [I updated the config file.]"
         input_data = {"session_id": "test-session-123"}
@@ -140,12 +140,12 @@ class TestStopHookStrategy1Marker:
         stdout = io.StringIO()
 
         with (
-            patch("stop_hook.sys.stdin", stdin),
-            patch("stop_hook.sys.stdout", stdout),
-            patch("stop_hook.get_voice_config", return_value=config),
+            patch("hook_framework.sys.stdin", stdin),
+            patch("hook_framework.sys.stdout", stdout),
+            patch("hook_framework.get_voice_config", return_value=config),
             patch("stop_hook.find_session_file", return_value="/fake/session.jsonl"),
             patch("stop_hook.get_last_assistant_message", return_value=marker_text),
-            patch("stop_hook.speak_summary") as mock_speak,
+            patch("stop_hook.speak") as mock_speak,
         ):
             import stop_hook
             stop_hook.main()
@@ -174,12 +174,12 @@ class TestStopHookStrategy2Short:
         stdout = io.StringIO()
 
         with (
-            patch("stop_hook.sys.stdin", stdin),
-            patch("stop_hook.sys.stdout", stdout),
-            patch("stop_hook.get_voice_config", return_value=config),
+            patch("hook_framework.sys.stdin", stdin),
+            patch("hook_framework.sys.stdout", stdout),
+            patch("hook_framework.get_voice_config", return_value=config),
             patch("stop_hook.find_session_file", return_value="/fake/session.jsonl"),
             patch("stop_hook.get_last_assistant_message", return_value=short_text),
-            patch("stop_hook.speak_summary") as mock_speak,
+            patch("stop_hook.speak") as mock_speak,
         ):
             import stop_hook
             stop_hook.main()
@@ -197,7 +197,7 @@ class TestStopHookStrategy2Short:
 class TestStopHookStrategy3Summarize:
     """Strategy 3: headless Claude summarization fallback."""
 
-    def test_summarize_fallback_calls_speak_summary(self) -> None:
+    def test_summarize_fallback_calls_speak(self) -> None:
         config = VoiceConfig(enabled=True, voice="af_heart", speed=1.0, max_sentences=2)
         long_text = "I made a lot of changes. " * 20
         input_data = {"session_id": "test-session-789"}
@@ -206,17 +206,17 @@ class TestStopHookStrategy3Summarize:
         stdout = io.StringIO()
 
         with (
-            patch("stop_hook.sys.stdin", stdin),
-            patch("stop_hook.sys.stdout", stdout),
-            patch("stop_hook.get_voice_config", return_value=config),
+            patch("hook_framework.sys.stdin", stdin),
+            patch("hook_framework.sys.stdout", stdout),
+            patch("hook_framework.get_voice_config", return_value=config),
             patch("stop_hook.find_session_file", return_value="/fake/session.jsonl"),
             patch("stop_hook.get_last_assistant_message", return_value=long_text),
-            patch("stop_hook.extract_voice_marker", return_value=None),
-            patch("stop_hook.is_short_response_sentences", return_value=False),
-            patch("stop_hook.get_recent_conversation", return_value=[("user", "go"), ("assistant", long_text)]),
-            patch("stop_hook.summarize_with_claude", return_value="Made many changes."),
-            patch("stop_hook.trim_to_sentences", return_value="Made many changes."),
-            patch("stop_hook.speak_summary") as mock_speak,
+            patch("extraction.extract_voice_marker", return_value=None),
+            patch("extraction.is_short_response_sentences", return_value=False),
+            patch("extraction.get_recent_conversation", return_value=[("user", "go"), ("assistant", long_text)]),
+            patch("extraction.summarize_with_claude", return_value="Made many changes."),
+            patch("extraction.trim_to_sentences", return_value="Made many changes."),
+            patch("stop_hook.speak") as mock_speak,
         ):
             import stop_hook
             stop_hook.main()
@@ -234,17 +234,17 @@ class TestStopHookStrategy3Summarize:
         stdout = io.StringIO()
 
         with (
-            patch("stop_hook.sys.stdin", stdin),
-            patch("stop_hook.sys.stdout", stdout),
-            patch("stop_hook.get_voice_config", return_value=config),
+            patch("hook_framework.sys.stdin", stdin),
+            patch("hook_framework.sys.stdout", stdout),
+            patch("hook_framework.get_voice_config", return_value=config),
             patch("stop_hook.find_session_file", return_value="/fake/session.jsonl"),
             patch("stop_hook.get_last_assistant_message", return_value=long_text),
-            patch("stop_hook.extract_voice_marker", return_value=None),
-            patch("stop_hook.is_short_response_sentences", return_value=False),
-            patch("stop_hook.get_recent_conversation", return_value=[("user", "go"), ("assistant", long_text)]),
-            patch("stop_hook.summarize_with_claude", return_value="Made many changes."),
-            patch("stop_hook.trim_to_sentences", return_value="Made many changes."),
-            patch("stop_hook.speak_summary"),
+            patch("extraction.extract_voice_marker", return_value=None),
+            patch("extraction.is_short_response_sentences", return_value=False),
+            patch("extraction.get_recent_conversation", return_value=[("user", "go"), ("assistant", long_text)]),
+            patch("extraction.summarize_with_claude", return_value="Made many changes."),
+            patch("extraction.trim_to_sentences", return_value="Made many changes."),
+            patch("stop_hook.speak"),
         ):
             import stop_hook
             stop_hook.main()
@@ -267,14 +267,14 @@ class TestStopHookStrategy4Truncation:
         stdout = io.StringIO()
 
         with (
-            patch("stop_hook.sys.stdin", stdin),
-            patch("stop_hook.sys.stdout", stdout),
-            patch("stop_hook.get_voice_config", return_value=config),
+            patch("hook_framework.sys.stdin", stdin),
+            patch("hook_framework.sys.stdout", stdout),
+            patch("hook_framework.get_voice_config", return_value=config),
             patch("stop_hook.find_session_file", return_value="/fake/session.jsonl"),
             patch("stop_hook.get_last_assistant_message", return_value=long_text),
-            patch("stop_hook.get_recent_conversation", return_value=[]),
-            patch("stop_hook.summarize_with_claude", return_value=None),
-            patch("stop_hook.speak_summary") as mock_speak,
+            patch("extraction.get_recent_conversation", return_value=[]),
+            patch("extraction.summarize_with_claude", return_value=None),
+            patch("stop_hook.speak") as mock_speak,
         ):
             import stop_hook
             stop_hook.main()
@@ -297,9 +297,9 @@ class TestStopHookNoSessionFile:
         stdout = io.StringIO()
 
         with (
-            patch("stop_hook.sys.stdin", stdin),
-            patch("stop_hook.sys.stdout", stdout),
-            patch("stop_hook.get_voice_config", return_value=config),
+            patch("hook_framework.sys.stdin", stdin),
+            patch("hook_framework.sys.stdout", stdout),
+            patch("hook_framework.get_voice_config", return_value=config),
             patch("stop_hook.find_session_file", return_value=None),
         ):
             import stop_hook
@@ -309,16 +309,16 @@ class TestStopHookNoSessionFile:
         assert output == {"decision": "approve"}
 
 
-# ── speak_summary ───────────────────────────────────────────────────
+# ── speak (from speaker module) ─────────────────────────────────────
 
 
-class TestSpeakSummary:
-    """Test speak_summary command construction."""
+class TestSpeak:
+    """Test speak command construction."""
 
     def test_basic_command(self) -> None:
-        with patch("stop_hook.subprocess.Popen") as mock_popen:
-            import stop_hook
-            stop_hook.speak_summary("sess-1", "Hello world", "af_heart")
+        with patch("speaker.subprocess.Popen") as mock_popen:
+            import speaker
+            speaker.speak("sess-1", "Hello world", "af_heart")
 
         mock_popen.assert_called_once()
         cmd = mock_popen.call_args[0][0]
@@ -329,17 +329,17 @@ class TestSpeakSummary:
         assert "Hello world" in cmd
 
     def test_speed_omitted_when_default(self) -> None:
-        with patch("stop_hook.subprocess.Popen") as mock_popen:
-            import stop_hook
-            stop_hook.speak_summary("sess-1", "text", "af_heart", speed=1.0)
+        with patch("speaker.subprocess.Popen") as mock_popen:
+            import speaker
+            speaker.speak("sess-1", "text", "af_heart", speed=1.0)
 
         cmd = mock_popen.call_args[0][0]
         assert "--speed" not in cmd
 
     def test_speed_included_when_not_default(self) -> None:
-        with patch("stop_hook.subprocess.Popen") as mock_popen:
-            import stop_hook
-            stop_hook.speak_summary("sess-1", "text", "af_heart", speed=1.5)
+        with patch("speaker.subprocess.Popen") as mock_popen:
+            import speaker
+            speaker.speak("sess-1", "text", "af_heart", speed=1.5)
 
         cmd = mock_popen.call_args[0][0]
         assert "--speed" in cmd
@@ -347,7 +347,7 @@ class TestSpeakSummary:
         assert cmd[speed_idx + 1] == "1.5"
 
     def test_oserror_swallowed(self) -> None:
-        with patch("stop_hook.subprocess.Popen", side_effect=OSError):
-            import stop_hook
+        with patch("speaker.subprocess.Popen", side_effect=OSError):
+            import speaker
             # Should not raise
-            stop_hook.speak_summary("sess-1", "text", "af_heart")
+            speaker.speak("sess-1", "text", "af_heart")

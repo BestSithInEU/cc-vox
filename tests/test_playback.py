@@ -132,14 +132,14 @@ class TestPlaybackLockContextManager:
     def test_context_manager_raises_on_timeout(
         self, tmp_lock_file: str
     ) -> None:
-        with patch("tts._playback.fcntl.flock", side_effect=BlockingIOError):
+        with patch("tts._playback._lock_exclusive_nb", side_effect=BlockingIOError):
             with pytest.raises(TimeoutError, match="Timeout waiting for audio lock"):
                 with PlaybackLock(max_wait=0.1):
                     pass  # pragma: no cover
 
 
 class TestPlaybackLockBlocked:
-    @patch("tts._playback.fcntl.flock", side_effect=BlockingIOError)
+    @patch("tts._playback._lock_exclusive_nb", side_effect=BlockingIOError)
     @patch("tts._playback._is_lock_stale", return_value=False)
     def test_acquire_returns_false_on_timeout(
         self, mock_stale: MagicMock, mock_flock: MagicMock, tmp_lock_file: str

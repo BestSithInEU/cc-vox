@@ -204,6 +204,7 @@ class TestChatterboxStop:
 # ===========================================================================
 
 class TestFindPidByPort:
+    @patch("tts.pocket_tts.sys.platform", "linux")
     @patch("tts.pocket_tts.subprocess.run")
     def test_finds_pid_in_ss_output(self, mock_run: MagicMock) -> None:
         mock_run.return_value = MagicMock(
@@ -215,6 +216,23 @@ class TestFindPidByPort:
         )
         assert _find_pid_by_port(8000) == 12345
 
+    @patch("tts.pocket_tts.sys.platform", "win32")
+    @patch("tts.pocket_tts.subprocess.run")
+    def test_finds_pid_in_netstat_output(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = MagicMock(
+            stdout=(
+                "  TCP    0.0.0.0:8000    0.0.0.0:0    LISTENING    12345\n"
+            ),
+        )
+        assert _find_pid_by_port(8000) == 12345
+
+    @patch("tts.pocket_tts.sys.platform", "darwin")
+    @patch("tts.pocket_tts.subprocess.run")
+    def test_finds_pid_in_lsof_output(self, mock_run: MagicMock) -> None:
+        mock_run.return_value = MagicMock(stdout="12345\n")
+        assert _find_pid_by_port(8000) == 12345
+
+    @patch("tts.pocket_tts.sys.platform", "linux")
     @patch("tts.pocket_tts.subprocess.run")
     def test_no_match_returns_none(self, mock_run: MagicMock) -> None:
         mock_run.return_value = MagicMock(
