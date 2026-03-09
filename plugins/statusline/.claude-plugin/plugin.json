@@ -1,0 +1,6 @@
+{
+  "name": "statusline",
+  "version": "0.1.0",
+  "description": "Catppuccin-themed statusline with costs, context, usage windows, git, and MCP info",
+  "author": { "name": "BestSithInEU" }
+}

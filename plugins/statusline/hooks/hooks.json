@@ -1,0 +1,17 @@
+{
+  "description": "Statusline hooks - auto-configure statusLine setting on session start",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"${CLAUDE_PLUGIN_ROOT}/hooks/auto_setup.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

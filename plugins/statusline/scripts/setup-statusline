@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Setup script for cc-vox statusline plugin.
+# Writes the statusLine setting to ~/.claude/settings.json
+# pointing at this plugin's statusline.py.
+#
+# Usage:
+#   bash plugins/statusline/scripts/setup-statusline
+#   bash plugins/statusline/scripts/setup-statusline --uninstall
+
+set -euo pipefail
+
+PLUGIN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SETTINGS_FILE="${HOME}/.claude/settings.json"
+STATUSLINE_CMD="uv run python ${PLUGIN_ROOT}/statusline.py"
+
+# ── Uninstall ────────────────────────────────────────────────────────
+
+if [[ "${1:-}" == "--uninstall" ]]; then
+    if [[ ! -f "$SETTINGS_FILE" ]]; then
+        echo "No settings.json found — nothing to uninstall."
+        exit 0
+    fi
+    python3 -c "
+import json, sys
+p = '${SETTINGS_FILE}'
+with open(p) as f:
+    data = json.load(f)
+if 'statusLine' in data:
+    del data['statusLine']
+    with open(p, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+    print('Statusline removed from', p)
+else:
+    print('No statusLine setting found — nothing to remove.')
+"
+    exit 0
+fi
+
+# ── Install ──────────────────────────────────────────────────────────
+
+mkdir -p "$(dirname "$SETTINGS_FILE")"
+
+if [[ ! -f "$SETTINGS_FILE" ]]; then
+    echo '{}' > "$SETTINGS_FILE"
+fi
+
+python3 -c "
+import json
+p = '${SETTINGS_FILE}'
+cmd = '${STATUSLINE_CMD}'
+with open(p) as f:
+    data = json.load(f)
+data['statusLine'] = {'type': 'command', 'command': cmd}
+with open(p, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+print('Statusline configured in', p)
+print('Command:', cmd)
+"
+
+echo ""
+echo "Done! Restart Claude Code to see the statusline."
