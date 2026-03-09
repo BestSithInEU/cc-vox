@@ -1,16 +1,17 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "cc-vox",
   "owner": {
     "name": "BestSithInEU"
   },
   "metadata": {
-    "description": "Claude Code Voice — speaks a short summary aloud after every response"
+    "description": "Claude Code Voice & Statusline — TTS feedback and luxury instrument panel"
   },
   "plugins": [
     {
       "name": "voice",
-      "source": "./",
-      "version": "0.1.0",
+      "source": "./plugins/voice",
+      "version": "0.1.1",
       "description": "Multi-backend TTS voice feedback for Claude Code",
       "author": {
         "name": "BestSithInEU"
@@ -19,6 +20,19 @@
       "license": "MIT",
       "keywords": ["voice", "tts", "qwen3-tts", "kokoro", "fish-speech", "chatterbox"],
       "category": "accessibility"
+    },
+    {
+      "name": "statusline",
+      "source": "./plugins/statusline",
+      "version": "0.1.0",
+      "description": "Catppuccin-themed statusline with costs, context, usage windows, git, and MCP info",
+      "author": {
+        "name": "BestSithInEU"
+      },
+      "repository": "https://github.com/BestSithInEU/cc-vox",
+      "license": "MIT",
+      "keywords": ["statusline", "dashboard", "costs", "context-window", "catppuccin"],
+      "category": "productivity"
     }
   ]
 }
